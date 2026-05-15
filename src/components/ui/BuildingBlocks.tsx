@@ -7,10 +7,11 @@ import {
   useTransform,
 } from "motion/react";
 
-// A faint wireframe that assembles as you scroll: each box's outline is
-// a stroke whose pathLength is driven by page scroll progress, so a line
-// travels out and closes into a box. Ranges are staggered down the page
-// so the scene "builds" the further you scroll. Purely decorative.
+// A faint wireframe that assembles as you scroll. Each box has a
+// static "blueprint" outline (always faintly visible) plus a brighter
+// stroke on top whose pathLength is driven by page scroll progress —
+// so a line travels around and "builds" the box the further you scroll.
+// Purely decorative; respects prefers-reduced-motion.
 
 type Block = {
   x: number;
@@ -26,7 +27,7 @@ type Block = {
 const BLOCKS: Block[] = [
   { x: 70, y: 60, w: 150, h: 110, range: [0.0, 0.16] },
   { x: 250, y: 90, w: 110, h: 90, range: [0.04, 0.2], accent: true },
-  { x: 900, y: 70, w: 180, h: 130, range: [0.02, 0.18] },
+  { x: 900, y: 70, w: 180, h: 130, range: [0.0, 0.18] },
   { x: 1010, y: 230, w: 90, h: 90, range: [0.1, 0.26] },
   { x: 130, y: 240, w: 120, h: 140, range: [0.12, 0.3], accent: true },
   { x: 470, y: 320, w: 200, h: 120, range: [0.2, 0.4] },
@@ -39,6 +40,14 @@ const BLOCKS: Block[] = [
   { x: 150, y: 660, w: 140, h: 110, range: [0.62, 0.82], accent: true },
   { x: 470, y: 690, w: 160, h: 90, range: [0.72, 0.92] },
 ];
+
+// Sharp rectangle as an explicit path — pathLength draw is rock solid
+// on <path> in motion (unlike <rect rx=...>).
+function rectPath(x: number, y: number, w: number, h: number) {
+  return `M ${x} ${y} L ${x + w} ${y} L ${x + w} ${y + h} L ${x} ${
+    y + h
+  } Z`;
+}
 
 export function BuildingBlocks() {
   const reduce = useReducedMotion();
@@ -74,41 +83,40 @@ function BlockRect({
   progress: ReturnType<typeof useScroll>["scrollYProgress"];
 }) {
   const { x, y, w, h, range, accent } = block;
+  const d = rectPath(x, y, w, h);
 
-  // All hooks are called unconditionally; reduced-motion just swaps in
-  // static values when wiring up the style props.
+  // Hooks always called; reduced-motion just swaps static values in.
   const drawn = useTransform(progress, range, [0, 1], { clamp: true });
-  const drawnOpacity = useTransform(drawn, [0, 0.12, 1], [0, 1, 1]);
   const cornerOpacity = useTransform(drawn, [0.85, 1], [0, 1]);
 
-  const stroke = accent
-    ? "rgba(139,92,246,0.55)"
-    : "rgba(255,255,255,0.22)";
+  const bright = accent
+    ? "rgba(139,92,246,0.7)"
+    : "rgba(255,255,255,0.3)";
+  const ghost = accent
+    ? "rgba(139,92,246,0.16)"
+    : "rgba(255,255,255,0.08)";
 
   return (
     <g>
-      <motion.rect
-        x={x}
-        y={y}
-        width={w}
-        height={h}
-        rx={6}
-        stroke={stroke}
+      {/* Always-visible blueprint outline */}
+      <path d={d} stroke={ghost} strokeWidth={1.5} />
+
+      {/* Scroll-built bright stroke on top */}
+      <motion.path
+        d={d}
+        stroke={bright}
         strokeWidth={1.75}
-        style={{
-          pathLength: reduce ? 1 : drawn,
-          opacity: reduce ? 0.6 : drawnOpacity,
-        }}
+        strokeLinecap="round"
+        style={{ pathLength: reduce ? 1 : drawn }}
       />
-      {/* Corner tick — a tiny blueprint accent that pops once the box
-          is essentially complete. */}
+
       {accent && (
         <motion.circle
           cx={x + w}
           cy={y}
-          r={2.5}
-          fill="rgba(139,92,246,0.5)"
-          style={{ opacity: reduce ? 0.5 : cornerOpacity }}
+          r={3}
+          fill="rgba(139,92,246,0.7)"
+          style={{ opacity: reduce ? 0.7 : cornerOpacity }}
         />
       )}
     </g>
