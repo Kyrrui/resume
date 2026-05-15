@@ -55,11 +55,19 @@ export function Building() {
   const monthWin = data.windows?.["30"];
   const yearWin = data.windows?.["365"];
   const win = expanded ? yearWin : monthWin;
-  const repos = win?.repos ?? [];
 
-  const extraYearProjects = Math.max(
+  // The chart always draws every line in the current window. The card
+  // grid is capped at 4 (most active) until "show more" — keeps the
+  // collapsed section tight even when many repos were touched.
+  const COLLAPSED_CARDS = 4;
+  const chartRepos = win?.repos ?? [];
+  const cardRepos = expanded
+    ? chartRepos
+    : chartRepos.slice(0, COLLAPSED_CARDS);
+
+  const hiddenCount = Math.max(
     0,
-    (yearWin?.repos.length ?? 0) - (monthWin?.repos.length ?? 0)
+    (yearWin?.repos.length ?? 0) - COLLAPSED_CARDS
   );
 
   // At most one repo is "active" at a time — its line is what the chart
@@ -87,7 +95,7 @@ export function Building() {
           caption={
             expanded
               ? "Every repo I've touched in the past year — public and private, pulled live from GitHub at build time."
-              : "Every repo I've touched in the last 30 days — public and private, pulled live from GitHub at build time."
+              : "My most active repos over the last 30 days — public and private, pulled live from GitHub at build time."
           }
           action={
             data.generatedAt && (
@@ -99,14 +107,14 @@ export function Building() {
           }
         />
 
-        {!win || repos.length === 0 ? (
+        {!win || chartRepos.length === 0 ? (
           <EmptyState />
         ) : (
           <>
             {win.days.length > 0 && (
               <BuildingChart
                 chart={win}
-                repos={repos.map((r) => ({
+                repos={chartRepos.map((r) => ({
                   name: r.name,
                   displayTitle: projects[r.name]?.title ?? r.name,
                   language: r.language,
@@ -116,7 +124,7 @@ export function Building() {
               />
             )}
             <div className="grid gap-5 md:grid-cols-2">
-              {repos.map((repo, i) => {
+              {cardRepos.map((repo, i) => {
                 const project = projects[repo.name];
                 const isActive = activeRepoName === repo.name;
                 return (
@@ -165,9 +173,7 @@ export function Building() {
                       </span>
                       <span>
                         Show the past year
-                        {extraYearProjects > 0
-                          ? ` · +${extraYearProjects} more`
-                          : ""}
+                        {hiddenCount > 0 ? ` · +${hiddenCount} more` : ""}
                       </span>
                     </>
                   )}

@@ -37,7 +37,6 @@ const LINE_COLORS = [
   "#facc15", // yellow
   "#fb7185", // rose
 ];
-const OTHER_COLOR = "#9ca3af"; // muted gray for the aggregated "Other" line
 
 export function BuildingChart({
   chart,
@@ -78,46 +77,33 @@ export function BuildingChart({
   const xAt = (i: number) =>
     n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
 
-  // Resolve the focused repo (if any). When set, the chart shows only its
-  // line; other repos and the aggregated "Other" series are hidden, and
-  // the header total switches to this repo's monthly total.
+  // Selecting a repo highlights its line — every line stays drawn, the
+  // others just dim. The header total switches to the selected repo.
   const focused = activeRepoName
     ? repos.find((r) => r.name === activeRepoName) ?? null
     : null;
 
-  const hasOther =
-    !focused && !!chart.other && chart.other.totalCommits > 0;
-
-  // Y scaled to the relevant values (linear scale — no log/sqrt).
-  const allValues = focused
-    ? focused.commitsByDay
-    : [
-        ...chart.totalByDay,
-        ...repos.flatMap((r) => r.commitsByDay),
-        ...(hasOther && chart.other ? chart.other.byDay : []),
-      ];
+  // Y scaled across every line (always — all lines are always drawn).
+  const allValues = [
+    ...chart.totalByDay,
+    ...repos.flatMap((r) => r.commitsByDay),
+  ];
   const rawMax = Math.max(1, ...allValues);
   const yMax = niceCeil(rawMax);
-  // Log scale for the all-repos view compresses spikes so a 50-commit
-  // day doesn't flatten the rest of the lines. When focused on a single
-  // repo we use linear — you want the true shape of that one project,
-  // not a compressed approximation.
-  const useLogScale = !focused;
-  const yLogMax = useLogScale ? Math.log10(yMax + 1) : 1;
-  const yAt = (v: number) => {
-    const clamped = Math.max(0, v);
-    if (useLogScale) {
-      return padT + plotH - (Math.log10(clamped + 1) / yLogMax) * plotH;
-    }
-    return padT + plotH - (clamped / yMax) * plotH;
-  };
+  // Log scale keeps a 50-commit spike from flattening the rest of the
+  // lines now that they're all on screen together.
+  const yLogMax = Math.log10(yMax + 1);
+  const yAt = (v: number) =>
+    padT + plotH - (Math.log10(Math.max(0, v) + 1) / yLogMax) * plotH;
 
-  // Middle tick value: on log, sqrt(yMax+1)-1 sits at the visual midpoint;
-  // on linear, it's just yMax/2.
-  const midTick = useLogScale
-    ? Math.max(1, Math.round(Math.sqrt(yMax + 1) - 1))
-    : Math.round(yMax / 2);
+  // On a log scale sqrt(yMax+1)-1 sits at the visual midpoint.
+  const midTick = Math.max(1, Math.round(Math.sqrt(yMax + 1) - 1));
   const ticks = [0, midTick, yMax];
+
+  const windowLabel =
+    chart.windowDays >= 360
+      ? "last 12 months"
+      : `last ${chart.windowDays} days`;
 
   // Short windows label each tick "Mon D"; long (year) windows just use
   // the month so a dozen labels don't collide.
@@ -143,11 +129,6 @@ export function BuildingChart({
     ? focused.commitsByDay.reduce((a, b) => a + b, 0)
     : chart.totalByDay.reduce((a, b) => a + b, 0);
 
-  // Repos to render lines for: just the focused one if set, otherwise all.
-  const repoIndexFor = (r: Repo) =>
-    repos.findIndex((x) => x.name === r.name);
-  const visibleRepos = focused ? [focused] : repos;
-
   return (
     <motion.div
       ref={wrapperRef}
@@ -161,8 +142,8 @@ export function BuildingChart({
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--text-faint)]">
             {focused
-              ? `${focused.displayTitle} · last 30 days`
-              : "Commits per day · last 30 days"}
+              ? `${focused.displayTitle} · ${windowLabel}`
+              : `Commits per day · ${windowLabel}`}
           </div>
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight text-[var(--text)]">
             {headerTotal}{" "}
@@ -173,35 +154,25 @@ export function BuildingChart({
         </div>
 
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
-          {visibleRepos.map((r) => {
-            const i = repoIndexFor(r);
-            const label = r.displayTitle;
+          {repos.map((r, i) => {
+            const dim = focused && focused.name !== r.name;
             return (
               <li
                 key={r.name}
-                className="flex items-center gap-1.5 text-[var(--text)]"
+                className={`flex items-center gap-1.5 transition-opacity ${
+                  dim ? "opacity-40" : "opacity-100"
+                }`}
               >
                 <span
                   className="h-0.5 w-4 rounded-full"
                   style={{ background: LINE_COLORS[i % LINE_COLORS.length] }}
                 />
                 <span className="font-mono text-[var(--text-muted)] truncate max-w-[200px]">
-                  {label}
+                  {r.displayTitle}
                 </span>
               </li>
             );
           })}
-          {hasOther && chart.other && (
-            <li className="flex items-center gap-1.5 text-[var(--text)]">
-              <span
-                className="h-0.5 w-4 rounded-full"
-                style={{ background: OTHER_COLOR }}
-              />
-              <span className="font-mono text-[var(--text-muted)]">
-                other ({chart.other.repoCount})
-              </span>
-            </li>
-          )}
         </ul>
       </div>
 
@@ -251,27 +222,29 @@ export function BuildingChart({
           </text>
         ))}
 
-        {visibleRepos.map((r) => (
-          <ScrollPath
-            key={r.name}
-            d={buildPath(r.commitsByDay, xAt, yAt)}
-            stroke={LINE_COLORS[repoIndexFor(r) % LINE_COLORS.length]}
-            strokeWidth={1.75}
-            opacity={1}
-            pathLength={drawProgress}
-          />
-        ))}
-
-        {hasOther && chart.other && (
-          <ScrollPath
-            d={buildPath(chart.other.byDay, xAt, yAt)}
-            stroke={OTHER_COLOR}
-            strokeWidth={1.5}
-            opacity={0.85}
-            strokeDasharray="4 4"
-            pathLength={drawProgress}
-          />
-        )}
+        {/* Non-focused lines first (dimmed), then the focused one on
+            top at full strength so it reads clearly above the rest. */}
+        {repos
+          .map((r, i) => ({ r, i }))
+          .sort((a, b) => {
+            const af = focused?.name === a.r.name ? 1 : 0;
+            const bf = focused?.name === b.r.name ? 1 : 0;
+            return af - bf;
+          })
+          .map(({ r, i }) => {
+            const isFocused = focused?.name === r.name;
+            const dim = focused && !isFocused;
+            return (
+              <ScrollPath
+                key={r.name}
+                d={buildPath(r.commitsByDay, xAt, yAt)}
+                stroke={LINE_COLORS[i % LINE_COLORS.length]}
+                strokeWidth={isFocused ? 2.75 : 1.75}
+                opacity={dim ? 0.18 : 1}
+                pathLength={drawProgress}
+              />
+            );
+          })}
       </svg>
     </motion.div>
   );
