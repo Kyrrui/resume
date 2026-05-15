@@ -14,7 +14,12 @@ import { profile } from "@/data/resume";
 // Coin geometry — front/back faces sit at ±COIN_HALF_THICKNESS, rim layers stack between.
 // 18px total thickness on a 256px disc ≈ 7% ratio (real silver-dollar proportions).
 const COIN_HALF_THICKNESS = 9; // px
-const RIM_LAYERS = 16;
+// Each rim layer uses a CSS border (cheap to paint) instead of a masked
+// gradient (very expensive on mobile GPUs). With cheaper paint we can
+// drop the layer count without losing visual smoothness on the cylinder
+// side. 10 layers across 18px ≈ 2px per layer — still dense enough to
+// read as a solid cylinder when the coin is tilted.
+const RIM_LAYERS = 10;
 
 export function Hero() {
   const reduce = useReducedMotion();
@@ -275,18 +280,19 @@ export function Hero() {
                   const z =
                     -COIN_HALF_THICKNESS +
                     (i * (COIN_HALF_THICKNESS * 2)) / (RIM_LAYERS - 1);
+                  // Each rim layer is a transparent disc with a thick
+                  // silver border — the border IS the visible cylinder
+                  // edge. inset-[2px] tucks the outer edge of the ring
+                  // 2px inside the face so the rim never peeks past
+                  // the face head-on. With box-sizing: border-box (the
+                  // Tailwind default) the 10px border draws inward, so
+                  // visible ring radius matches the old mask version.
                   return (
                     <div
                       key={i}
                       aria-hidden
-                      className="pointer-events-none absolute inset-0 rounded-full"
-                      style={{
-                        transform: `translateZ(${z}px)`,
-                        background: "#cbd5e1",
-                        WebkitMask:
-                          "radial-gradient(circle closest-side, transparent 0 calc(100% - 12px), #000 calc(100% - 12px) calc(100% - 2px), transparent calc(100% - 2px) 100%)",
-                        mask: "radial-gradient(circle closest-side, transparent 0 calc(100% - 12px), #000 calc(100% - 12px) calc(100% - 2px), transparent calc(100% - 2px) 100%)",
-                      }}
+                      className="pointer-events-none absolute inset-[2px] rounded-full border-[10px] border-[#cbd5e1]"
+                      style={{ transform: `translateZ(${z}px)` }}
                     />
                   );
                 })}
