@@ -89,14 +89,14 @@ export function Hero() {
       }
       return;
     }
-    // Spin from 1080deg (3 full rotations) decelerating to 0. The
-    // previous 5-rotation toss spent its first ~1.5s in a frantic blur
-    // that read too "flashy" for a resume site — tossing 3 rotations
-    // in 3.5s lands the coin recognizably without that opening rush.
-    rotateY.set(1080);
+    // Coin toss with an ease-in-out shape: gentle wind-up at the
+    // start, peak rotation in the middle, smooth settle at the end.
+    // No more "frantic opening rush" — the toss reads as someone
+    // calmly flipping a coin, not someone hurling it.
+    rotateY.set(720);
     await animate(rotateY, 0, {
       duration: 3.5,
-      ease: [0.2, 0.6, 0.25, 1],
+      ease: [0.4, 0, 0.3, 1],
     });
     setIsFlipping(false);
     // If the user is hovering when the spin lands, keep the coin face
