@@ -373,9 +373,14 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-px overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.015]"
         >
-          <MetaCell label="Web3 since" value={profile.since} mono />
           <MetaCell label="Based" value={profile.location} />
           <MetaCell label="Currently" value={profile.currently} />
+          <MetaCell
+            label="Github"
+            value="@Kyrrui"
+            href="https://github.com/Kyrrui"
+            mono
+          />
           <MetaCell
             label="LinkedIn"
             value="@kyle-c-bryant"

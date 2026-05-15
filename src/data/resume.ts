@@ -1,7 +1,6 @@
 // Content sourced from Kyle's LinkedIn (May 2026). Edit freely.
 
 export const profile = {
-  since: "2018",
   name: "Kyle Bryant",
   role: "Builder · Crypto × AI",
   location: "Greater Boston",
