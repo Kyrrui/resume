@@ -110,25 +110,26 @@ export function BuildingChart({
     : Math.round(yMax / 2);
   const ticks = [0, midTick, yMax];
 
-  const formatShortDate = (iso: string) => {
+  // Short windows label each tick "Mon D"; long (year) windows just use
+  // the month so a dozen labels don't collide.
+  const longWindow = n > 90;
+  const formatTick = (iso: string) => {
     const d = new Date(iso + "T00:00:00Z");
     return d.toLocaleString(undefined, {
       month: "short",
-      day: "numeric",
+      ...(longWindow ? {} : { day: "numeric" }),
       timeZone: "UTC",
     });
   };
-  const xTicks = [
-    { i: 0, label: formatShortDate(chart.days[0]) },
-    {
-      i: Math.floor((n - 1) / 2),
-      label: formatShortDate(chart.days[Math.floor((n - 1) / 2)]),
-    },
-    { i: n - 1, label: formatShortDate(chart.days[n - 1]) },
-  ];
+  // 3 ticks for short windows, 5 for the year so months read clearly.
+  const tickCount = longWindow ? 5 : 3;
+  const xTicks = Array.from({ length: tickCount }, (_, k) => {
+    const i = Math.round((k / (tickCount - 1)) * (n - 1));
+    return { i, label: formatTick(chart.days[i]) };
+  });
 
-  // Total to display in the header — focused repo's monthly count if a
-  // card is flipped, otherwise the overall total.
+  // Header total — the focused repo's count if a project is selected,
+  // otherwise the window-wide total across all repos.
   const headerTotal = focused
     ? focused.commitsByDay.reduce((a, b) => a + b, 0)
     : chart.totalByDay.reduce((a, b) => a + b, 0);

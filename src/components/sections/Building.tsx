@@ -32,21 +32,33 @@ type Repo = {
   commitsByDay?: number[];
 };
 
+type ChartWindow = {
+  windowDays: number;
+  days: string[];
+  totalByDay: number[];
+  other?: { repoCount: number; totalCommits: number; byDay: number[] };
+  repos: Repo[];
+};
+
 type RecentReposData = {
   generatedAt: string | null;
   user: string | null;
-  chart?: {
-    windowDays: number;
-    days: string[];
-    totalByDay: number[];
-  };
-  repos: Repo[];
+  windows?: Record<string, ChartWindow>;
 };
 
 const data = recentRepos as RecentReposData;
 
+const WINDOW_OPTIONS = [
+  { key: "30", label: "30 days" },
+  { key: "365", label: "1 year" },
+] as const;
+
 export function Building() {
-  const repos = data.repos ?? [];
+  // Which time window the chart + cards reflect. The year view surfaces
+  // projects the 30-day view doesn't (re-ranked per window at build time).
+  const [windowKey, setWindowKey] = useState<string>("30");
+  const win = data.windows?.[windowKey];
+  const repos = win?.repos ?? [];
 
   // At most one repo is "active" at a time — its line is what the chart
   // focuses on. Plain (non-curated) cards toggle this like a radio.
@@ -70,24 +82,51 @@ export function Building() {
         <SectionHeader
           index="01 /"
           title="Currently Building"
-          caption="Most recent commits across my public and private repos — pulled live from GitHub at build time."
+          caption="Commits across my public and private repos — pulled live from GitHub at build time."
           action={
-            data.generatedAt && (
-              <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-[var(--text-faint)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
-                refreshed {relativeTime(data.generatedAt)}
-              </span>
-            )
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <div
+                role="tablist"
+                aria-label="Time window"
+                className="inline-flex items-center gap-1 rounded-full border border-white/[0.07] bg-white/[0.02] p-1"
+              >
+                {WINDOW_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={windowKey === opt.key}
+                    onClick={() => {
+                      setWindowKey(opt.key);
+                      setActiveRepoName(null);
+                    }}
+                    className={`rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors ${
+                      windowKey === opt.key
+                        ? "bg-white/[0.08] text-white"
+                        : "text-[var(--text-muted)] hover:text-white"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {data.generatedAt && (
+                <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-[var(--text-faint)]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
+                  refreshed {relativeTime(data.generatedAt)}
+                </span>
+              )}
+            </div>
           }
         />
 
-        {repos.length === 0 ? (
+        {!win || repos.length === 0 ? (
           <EmptyState />
         ) : (
           <>
-            {data.chart && data.chart.days.length > 0 && (
+            {win.days.length > 0 && (
               <BuildingChart
-                chart={data.chart}
+                chart={win}
                 repos={repos.map((r) => ({
                   name: r.name,
                   displayTitle: projects[r.name]?.title ?? r.name,

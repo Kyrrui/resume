@@ -1,16 +1,20 @@
 // Build-time fetcher for recent GitHub activity. Runs as a `prebuild` step
 // and writes src/data/recent-repos.json which the Building section reads.
 //
+// Emits TWO windows:
+//   - "30":  last 30 days  (default view)
+//   - "365": last 365 days (the "1 year" toggle)
+// Each window independently ranks the top repos by commits *in that
+// window* (so the year view surfaces projects the 30-day view doesn't),
+// builds a per-day series, and rolls the rest into an "Other" series.
+//
 // Requires a Personal Access Token in env:
 //   - $GITHUB_TOKEN  (preferred — also Netlify's convention)
 //   - $GH_TOKEN      (fallback — gh CLI's convention)
+// Token scopes: `repo` (private repo metadata + commits), `read:user`.
 //
-// Token scopes:
-//   - `repo` (for private repo metadata + commits)
-//   - `read:user`
-//
-// If no token is found, the script logs a warning and leaves
-// recent-repos.json untouched so dev builds keep working.
+// No token -> logs a warning and leaves recent-repos.json untouched so
+// dev builds keep working.
 
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -19,15 +23,18 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 const outPath = resolve(projectRoot, "src/data/recent-repos.json");
-// Top N repos are shown as cards and as named lines in the chart.
-const TOP_REPO_COUNT = 4;
-// Total repos fetched. Commits in the (POOL - TOP) trailing repos roll up
-// into a single "Other" series on the chart, so the chart total stays
-// close to the user's real activity even though only the top 4 are named.
-const FETCH_REPO_COUNT = 20;
+
+// How many owned repos to pull into the candidate pool.
+const FETCH_REPO_COUNT = 25;
+// Named (carded) repos per window — the rest aggregate into "Other".
+const TOP_REPO_COUNT = { 30: 4, 365: 8 };
+// Recent commits surfaced on a plain repo card (window-independent).
 const COMMITS_PER_REPO_DISPLAY = 4;
-// 30-day window for the per-day commit chart.
-const CHART_WINDOW_DAYS = 30;
+// History pagination cap per repo (100 commits/page). 6 -> up to 600
+// commits/repo/year, plenty for a stylized chart without unbounded calls.
+const MAX_HISTORY_PAGES = 6;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WINDOWS = [30, 365];
 
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
 if (!token) {
@@ -38,8 +45,41 @@ if (!token) {
   process.exit(0);
 }
 
-const query = `
-  query RecentRepos($repoCount: Int!, $since: GitTimestamp!) {
+async function gql(query, variables) {
+  const res = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "User-Agent": "kyle-bryant-resume-site-build",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!res.ok) {
+    console.error(
+      `[fetch-github-activity] GitHub API ${res.status}:`,
+      await res.text()
+    );
+    process.exit(1);
+  }
+  const payload = await res.json();
+  if (payload.errors) {
+    console.error(
+      "[fetch-github-activity] GraphQL errors:",
+      JSON.stringify(payload.errors, null, 2)
+    );
+    process.exit(1);
+  }
+  return payload.data;
+}
+
+// Pull the year-ago boundary (UTC midnight) — the widest window we need.
+const since = new Date(Date.now() - 365 * DAY_MS);
+since.setUTCHours(0, 0, 0, 0);
+const sinceIso = since.toISOString();
+
+const reposQuery = `
+  query Repos($repoCount: Int!, $since: GitTimestamp!) {
     viewer {
       login
       repositories(
@@ -58,18 +98,13 @@ const query = `
           url
           stargazerCount
           primaryLanguage { name color }
-          repositoryTopics(first: 6) {
-            nodes { topic { name } }
-          }
+          repositoryTopics(first: 6) { nodes { topic { name } } }
           defaultBranchRef {
             target {
               ... on Commit {
                 history(first: 100, since: $since) {
-                  nodes {
-                    abbreviatedOid
-                    messageHeadline
-                    committedDate
-                  }
+                  pageInfo { hasNextPage endCursor }
+                  nodes { abbreviatedOid messageHeadline committedDate }
                 }
               }
             }
@@ -80,109 +115,151 @@ const query = `
   }
 `;
 
-const since = new Date(Date.now() - CHART_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-// Pad slightly so the 30th-day boundary doesn't drop a same-day commit.
-since.setUTCHours(0, 0, 0, 0);
-const sinceIso = since.toISOString();
+const historyPageQuery = `
+  query History($name: String!, $owner: String!, $since: GitTimestamp!, $after: String!) {
+    repository(name: $name, owner: $owner) {
+      defaultBranchRef {
+        target {
+          ... on Commit {
+            history(first: 100, since: $since, after: $after) {
+              pageInfo { hasNextPage endCursor }
+              nodes { abbreviatedOid messageHeadline committedDate }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
-const res = await fetch("https://api.github.com/graphql", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-    "User-Agent": "kyle-bryant-resume-site-build",
-  },
-  body: JSON.stringify({
-    query,
-    variables: { repoCount: FETCH_REPO_COUNT, since: sinceIso },
-  }),
+const data = await gql(reposQuery, {
+  repoCount: FETCH_REPO_COUNT,
+  since: sinceIso,
 });
+const login = data.viewer.login;
 
-if (!res.ok) {
-  console.error(
-    `[fetch-github-activity] GitHub API ${res.status}:`,
-    await res.text()
-  );
-  process.exit(1);
-}
+// Collect each repo's full year of commits (paginating where needed).
+const allFetched = [];
+for (const r of data.viewer.repositories.nodes || []) {
+  if (!r || r.isArchived) continue;
 
-const payload = await res.json();
-if (payload.errors) {
-  console.error(
-    "[fetch-github-activity] GraphQL errors:",
-    JSON.stringify(payload.errors, null, 2)
-  );
-  process.exit(1);
-}
+  const hist = r.defaultBranchRef?.target?.history;
+  const commits = (hist?.nodes || []).map((c) => ({
+    sha: c.abbreviatedOid,
+    message: c.messageHeadline,
+    date: c.committedDate,
+  }));
 
-// Build the chart's day buckets (UTC YYYY-MM-DD strings), oldest → newest.
-const days = [];
-for (let i = CHART_WINDOW_DAYS - 1; i >= 0; i--) {
-  const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-  d.setUTCHours(0, 0, 0, 0);
-  days.push(d.toISOString().slice(0, 10));
-}
-const dayIndex = new Map(days.map((d, i) => [d, i]));
-
-const allFetched = (payload.data.viewer.repositories.nodes || [])
-  .filter((r) => r && !r.isArchived)
-  .map((r) => {
-    const allCommits = (r.defaultBranchRef?.target?.history?.nodes || []).map(
-      (c) => ({
+  let pageInfo = hist?.pageInfo;
+  let pages = 1;
+  const [owner, name] = r.nameWithOwner.split("/");
+  while (pageInfo?.hasNextPage && pages < MAX_HISTORY_PAGES) {
+    const pageData = await gql(historyPageQuery, {
+      name,
+      owner,
+      since: sinceIso,
+      after: pageInfo.endCursor,
+    });
+    const ph = pageData.repository?.defaultBranchRef?.target?.history;
+    for (const c of ph?.nodes || []) {
+      commits.push({
         sha: c.abbreviatedOid,
         message: c.messageHeadline,
         date: c.committedDate,
-      })
-    );
-
-    // Per-day counts for this repo across the chart window.
-    const commitsByDay = new Array(days.length).fill(0);
-    for (const c of allCommits) {
-      const dayKey = c.date.slice(0, 10);
-      const idx = dayIndex.get(dayKey);
-      if (idx !== undefined) commitsByDay[idx]++;
+      });
     }
-
-    return {
-      name: r.name,
-      fullName: r.nameWithOwner,
-      description: r.description,
-      isPrivate: r.isPrivate,
-      pushedAt: r.pushedAt,
-      // Don't expose private repo URLs — only public ones are linkable.
-      url: r.isPrivate ? null : r.url,
-      stars: r.stargazerCount,
-      language: r.primaryLanguage
-        ? { name: r.primaryLanguage.name, color: r.primaryLanguage.color }
-        : null,
-      topics: (r.repositoryTopics?.nodes || []).map((n) => n.topic.name),
-      commits: allCommits.slice(0, COMMITS_PER_REPO_DISPLAY),
-      totalCommits: allCommits.length,
-      commitsByDay,
-    };
-  });
-
-// Top N go to the cards + named chart lines.
-const repos = allFetched.slice(0, TOP_REPO_COUNT);
-
-// Everything past the top N gets aggregated into an "Other" series — same
-// shape as a repo's commitsByDay so the chart can render it the same way.
-const otherByDay = new Array(days.length).fill(0);
-let otherRepoCount = 0;
-let otherTotalCommits = 0;
-for (const r of allFetched.slice(TOP_REPO_COUNT)) {
-  if (r.totalCommits === 0) continue;
-  otherRepoCount += 1;
-  otherTotalCommits += r.totalCommits;
-  for (let i = 0; i < days.length; i++) {
-    otherByDay[i] += r.commitsByDay[i] || 0;
+    pageInfo = ph?.pageInfo;
+    pages += 1;
   }
+
+  allFetched.push({
+    name: r.name,
+    fullName: r.nameWithOwner,
+    description: r.description,
+    isPrivate: r.isPrivate,
+    pushedAt: r.pushedAt,
+    url: r.isPrivate ? null : r.url,
+    stars: r.stargazerCount,
+    language: r.primaryLanguage
+      ? { name: r.primaryLanguage.name, color: r.primaryLanguage.color }
+      : null,
+    topics: (r.repositoryTopics?.nodes || []).map((n) => n.topic.name),
+    commits, // full year, newest-first
+  });
 }
 
-// Total per-day across ALL fetched repos (named top + other).
-const totalByDay = days.map((_, i) =>
-  allFetched.reduce((sum, r) => sum + (r.commitsByDay[i] || 0), 0)
-);
+// Build one window (e.g. 30 or 365 days) from the shared commit data.
+function buildWindow(windowDays) {
+  const days = [];
+  for (let i = windowDays - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * DAY_MS);
+    d.setUTCHours(0, 0, 0, 0);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  const dayIndex = new Map(days.map((d, i) => [d, i]));
+
+  const scored = allFetched.map((r) => {
+    const commitsByDay = new Array(days.length).fill(0);
+    let totalCommits = 0;
+    for (const c of r.commits) {
+      const idx = dayIndex.get(c.date.slice(0, 10));
+      if (idx !== undefined) {
+        commitsByDay[idx] += 1;
+        totalCommits += 1;
+      }
+    }
+    return { ...r, commitsByDay, totalCommits };
+  });
+
+  // Rank by activity *within this window*, then split named vs Other.
+  const active = scored
+    .filter((r) => r.totalCommits > 0)
+    .sort((a, b) => b.totalCommits - a.totalCommits);
+  const topN = TOP_REPO_COUNT[windowDays] ?? 4;
+  const named = active.slice(0, topN);
+  const rest = active.slice(topN);
+
+  const otherByDay = new Array(days.length).fill(0);
+  let otherTotalCommits = 0;
+  for (const r of rest) {
+    otherTotalCommits += r.totalCommits;
+    for (let i = 0; i < days.length; i++) otherByDay[i] += r.commitsByDay[i];
+  }
+
+  const totalByDay = days.map((_, i) =>
+    scored.reduce((sum, r) => sum + (r.commitsByDay[i] || 0), 0)
+  );
+
+  const repos = named.map((r) => ({
+    name: r.name,
+    fullName: r.fullName,
+    description: r.description,
+    isPrivate: r.isPrivate,
+    pushedAt: r.pushedAt,
+    url: r.url,
+    stars: r.stars,
+    language: r.language,
+    topics: r.topics,
+    commits: r.commits.slice(0, COMMITS_PER_REPO_DISPLAY),
+    totalCommits: r.totalCommits,
+    commitsByDay: r.commitsByDay,
+  }));
+
+  return {
+    windowDays,
+    days,
+    totalByDay,
+    other: {
+      repoCount: rest.length,
+      totalCommits: otherTotalCommits,
+      byDay: otherByDay,
+    },
+    repos,
+  };
+}
+
+const windows = {};
+for (const w of WINDOWS) windows[String(w)] = buildWindow(w);
 
 if (!existsSync(dirname(outPath))) {
   mkdirSync(dirname(outPath), { recursive: true });
@@ -191,26 +268,17 @@ if (!existsSync(dirname(outPath))) {
 writeFileSync(
   outPath,
   JSON.stringify(
-    {
-      generatedAt: new Date().toISOString(),
-      user: payload.data.viewer.login,
-      chart: {
-        windowDays: CHART_WINDOW_DAYS,
-        days,
-        totalByDay,
-        other: {
-          repoCount: otherRepoCount,
-          totalCommits: otherTotalCommits,
-          byDay: otherByDay,
-        },
-      },
-      repos,
-    },
+    { generatedAt: new Date().toISOString(), user: login, windows },
     null,
     2
   )
 );
 
 console.log(
-  `[fetch-github-activity] Wrote ${repos.length} named repos + ${otherRepoCount} aggregated as "Other" (${days.length}-day chart) to ${outPath}`
+  `[fetch-github-activity] Wrote windows: ` +
+    WINDOWS.map(
+      (w) =>
+        `${w}d=${windows[String(w)].repos.length} repos +${windows[String(w)].other.repoCount} other`
+    ).join(", ") +
+    ` -> ${outPath}`
 );
