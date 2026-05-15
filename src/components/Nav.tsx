@@ -14,13 +14,16 @@ const items = [
   { id: "contact", label: "Contact" },
 ];
 
-// Sum the chart's per-day series — same number the Building section's
-// line graph displays as its total. Single source of truth, computed at
-// build time. Falls back to null if the JSON hasn't been populated yet
-// (e.g. dev environment without GITHUB_TOKEN).
+// Sum the 30-day window's per-day series — same number the Building
+// section's chart shows for "30 days". Single source of truth, computed
+// at build time. Falls back to null if the JSON hasn't been populated
+// yet (e.g. dev environment without GITHUB_TOKEN).
 const monthlyCommits: number | null = (() => {
-  const totals = (recentRepos as { chart?: { totalByDay?: number[] } }).chart
-    ?.totalByDay;
+  const totals = (
+    recentRepos as {
+      windows?: Record<string, { totalByDay?: number[] }>;
+    }
+  ).windows?.["30"]?.totalByDay;
   if (!totals || totals.length === 0) return null;
   return totals.reduce((a, b) => a + b, 0);
 })();
