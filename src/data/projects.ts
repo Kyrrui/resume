@@ -173,4 +173,32 @@ export const projects: Record<string, ProjectDetails> = {
       "Netlify",
     ],
   },
+
+  "uXa-Automator": {
+    title: "uXa Automator",
+    subtitle: "Personal Project · 2026",
+    url: "https://github.com/Kyrrui/uXa-Automator",
+    logo: "/uxa-no-background.png",
+    logoShape: "tile",
+    description:
+      "Standalone cross-platform (Windows/macOS) desktop app for building, saving, and executing repeatable keyboard/mouse automation sequences — step-based queue with anti-detection timing.",
+    highlights: [
+      "Step-based execution model: grouped inputs run concurrently via threading; steps execute sequentially behind synchronization barriers.",
+      "System-wide low-level keyboard hook (pynput) for global start/stop hotkeys that work while the app is unfocused — control decoupled from window focus.",
+      "Configurable \"humanize\" feature applies Gaussian timing variance (10–20%, grounded in researched human input-latency ranges) to evade bot-detection heuristics.",
+      "Automated PyInstaller → GitHub Releases pipeline: one build script does multi-resolution icon generation (PIL .ico, iconutil .icns), DMG creation, and gh-CLI release distribution.",
+    ],
+    details: [
+      "Cross-platform builds packaged into signed-ready standalone binaries via PyInstaller, with semantic versioning and JSON-serialized user presets.",
+      "UX iterated through rapid feedback cycles: collapsible/selectable queue steps, scroll handling, pop-out views, and input validation.",
+      "Event-driven architecture with OS-level input hooks; concurrency handled with explicit thread synchronization rather than ad-hoc sleeps.",
+    ],
+    stack: [
+      "Python",
+      "tkinter",
+      "pynput",
+      "PyInstaller",
+      "GitHub Releases",
+    ],
+  },
 };
