@@ -89,11 +89,14 @@ export function Hero() {
       }
       return;
     }
-    // Spin from 1800deg (5 full rotations) decelerating to 0.
-    rotateY.set(1800);
+    // Spin from 1080deg (3 full rotations) decelerating to 0. The
+    // previous 5-rotation toss spent its first ~1.5s in a frantic blur
+    // that read too "flashy" for a resume site — tossing 3 rotations
+    // in 3.5s lands the coin recognizably without that opening rush.
+    rotateY.set(1080);
     await animate(rotateY, 0, {
-      duration: 5,
-      ease: [0.05, 0.6, 0.2, 1],
+      duration: 3.5,
+      ease: [0.2, 0.6, 0.25, 1],
     });
     setIsFlipping(false);
     // If the user is hovering when the spin lands, keep the coin face
