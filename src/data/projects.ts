@@ -177,7 +177,7 @@ export const projects: Record<string, ProjectDetails> = {
   "uXa-Automator": {
     title: "uXa Automator",
     subtitle: "Personal Project · 2026",
-    url: "https://github.com/Kyrrui/uXa-Automator",
+    url: "https://github.com/Kyrrui/uXa-Automator/releases/tag/v1.1.1",
     logo: "/uxa-no-background.png",
     logoShape: "tile",
     description:
