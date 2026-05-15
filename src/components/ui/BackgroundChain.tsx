@@ -44,7 +44,8 @@ function nodeAt(i: number) {
 // the chain is invisible while you're at the very top of the page.
 const REVEAL_START = 0.03;
 const REVEAL_SPAN = 0.92;
-const SEG_DUR = 0.04;
+// A block and the connector leading into it share this reveal window
+// so the line never runs ahead of the blocks.
 const BLK_DUR = 0.035;
 
 const BASE_BLOCK = 34124;
@@ -126,12 +127,13 @@ function Segment({
   // Single straight segment: horizontal within a row, vertical at a
   // row turn (consecutive nodes always share either y or x).
   const d = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
-  // Solid line that fades in just before its destination block lands
-  // (opacity, not pathLength — pathLength under the heavy non-uniform
-  // viewBox scaling renders as a dashed artifact).
+  // Solid line that fades in on the same window as its destination
+  // block, so the line and block render together. (opacity, not
+  // pathLength — pathLength under the heavy non-uniform viewBox
+  // scaling renders as a dashed artifact.)
   const opacity = useTransform(
     progress,
-    [to.at - SEG_DUR, to.at],
+    [to.at, to.at + BLK_DUR],
     [0, 1],
     { clamp: true }
   );
