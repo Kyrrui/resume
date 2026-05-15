@@ -100,15 +100,15 @@ function ProjectFace({
       <div className="flex items-start gap-4">
         {project.logo && (
           <div
-            className={`inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden bg-white/[0.03] ${
-              project.logoShape === "circle" ? "rounded-full" : "rounded-xl p-1.5"
+            className={`inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden bg-white/[0.03] ${
+              project.logoShape === "circle" ? "rounded-full" : "rounded-xl"
             }`}
           >
             <Image
               src={project.logo}
               alt=""
-              width={64}
-              height={64}
+              width={112}
+              height={112}
               className={`h-full w-full ${
                 project.logoShape === "circle"
                   ? "object-cover"
