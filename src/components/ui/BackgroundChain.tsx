@@ -14,22 +14,30 @@ import {
 // scroll. Lives in page flow (full document height) behind all
 // content. Decorative; respects prefers-reduced-motion.
 
-const N = 28;
+// Horizontal rows of blocks. Within a row the chain runs straight
+// left<->right (lines only connect adjacent blocks, no bends). At a
+// row end it drops straight down to the row below — the *block* is
+// the corner, so direction only ever changes at a block, and only
+// at row ends (not at every block).
+const PER_ROW = 4;
+const ROWS = 7;
+const N = PER_ROW * ROWS;
 
-// Columns the chain weaves through, spanning the full page width
-// (blocks march left -> right, not just hugging the sides).
-const COLS = [12, 30.5, 49, 67.5, 86];
-// First block sits right below the hero/profile card.
+// Columns span the full page width.
+const COLS = [12, 36.67, 61.33, 86];
+// First row sits right below the hero/profile card.
 const START_Y = 13;
 const END_Y = 95;
-const STEP = (END_Y - START_Y) / (N - 1);
+const ROW_GAP = (END_Y - START_Y) / (ROWS - 1);
 
-// Boustrophedon: 0,1,2,3,4,3,2,1,0,1,... so the chain sweeps fully
-// across the width and back as it descends.
-function colX(i: number) {
-  const period = 2 * (COLS.length - 1);
-  const t = i % period;
-  return COLS[t < COLS.length ? t : period - t];
+// Boustrophedon: even rows go left->right, odd rows right->left, so
+// the end of one row sits directly above the start of the next and
+// the connecting drop is a single straight vertical.
+function nodeAt(i: number) {
+  const row = Math.floor(i / PER_ROW);
+  const k = i % PER_ROW;
+  const col = row % 2 === 0 ? k : PER_ROW - 1 - k;
+  return { x: COLS[col], y: START_Y + row * ROW_GAP };
 }
 
 // Scroll-progress window the whole chain builds across. Starts > 0 so
@@ -50,13 +58,16 @@ type Node = {
   at: number;
 };
 
-const NODES: Node[] = Array.from({ length: N }, (_, i) => ({
-  x: colX(i),
-  y: START_Y + i * STEP,
-  label: `#${BASE_BLOCK - i}`,
-  accent: i % 4 === 3,
-  at: REVEAL_START + (i / N) * REVEAL_SPAN,
-}));
+const NODES: Node[] = Array.from({ length: N }, (_, i) => {
+  const { x, y } = nodeAt(i);
+  return {
+    x,
+    y,
+    label: `#${BASE_BLOCK - i}`,
+    accent: i % 5 === 2,
+    at: REVEAL_START + (i / N) * REVEAL_SPAN,
+  };
+});
 
 export function BackgroundChain() {
   const reduce = useReducedMotion();
@@ -112,8 +123,9 @@ function Segment({
   reduce: boolean;
   progress: ReturnType<typeof useScroll>["scrollYProgress"];
 }) {
-  const my = (from.y + to.y) / 2;
-  const d = `M ${from.x} ${from.y} L ${from.x} ${my} L ${to.x} ${my} L ${to.x} ${to.y}`;
+  // Single straight segment: horizontal within a row, vertical at a
+  // row turn (consecutive nodes always share either y or x).
+  const d = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
   // Solid line that fades in just before its destination block lands
   // (opacity, not pathLength — pathLength under the heavy non-uniform
   // viewBox scaling renders as a dashed artifact).
