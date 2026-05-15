@@ -4,7 +4,9 @@ import { useState } from "react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import { BuildingChart } from "@/components/sections/BuildingChart";
-import { FlippableRepoCard } from "@/components/sections/FlippableRepoCard";
+import { ProjectCard } from "@/components/sections/ProjectCard";
+import { DeepDiveModal } from "@/components/sections/DeepDiveModal";
+import type { ProjectDetails } from "@/data/projects";
 import { projects } from "@/data/projects";
 import { relativeTime } from "@/lib/relative-time";
 import recentRepos from "@/data/recent-repos.json";
@@ -47,12 +49,19 @@ export function Building() {
   const repos = data.repos ?? [];
 
   // At most one repo is "active" at a time — its line is what the chart
-  // focuses on. Clicking ANY card (flippable or plain) toggles whether
-  // that repo is the active one. Acts like a radio: click again to clear.
+  // focuses on. Plain (non-curated) cards toggle this like a radio.
+  // Curated project cards set it (and open the deep-dive modal); the
+  // chart focus persists after the modal closes so you can see it.
   const [activeRepoName, setActiveRepoName] = useState<string | null>(null);
+  const [openProject, setOpenProject] = useState<ProjectDetails | null>(null);
 
   const toggleActive = (name: string) => {
     setActiveRepoName((current) => (current === name ? null : name));
+  };
+
+  const openDeepDive = (name: string, project: ProjectDetails) => {
+    setActiveRepoName(name);
+    setOpenProject(project);
   };
 
   return (
@@ -81,14 +90,9 @@ export function Building() {
                 chart={data.chart}
                 repos={repos.map((r) => ({
                   name: r.name,
-                  // Use the curated project title when this repo isn't
-                  // the active one; the chart swaps to the repo name
-                  // when it IS active (flippable cards have flipped to
-                  // the repo face; plain cards have been selected).
                   displayTitle: projects[r.name]?.title ?? r.name,
                   language: r.language,
                   commitsByDay: r.commitsByDay ?? [],
-                  isFlipped: activeRepoName === r.name,
                 }))}
                 activeRepoName={activeRepoName}
               />
@@ -100,14 +104,11 @@ export function Building() {
                 return (
                   <Reveal key={repo.fullName} delay={i * 0.05}>
                     {project ? (
-                      <FlippableRepoCard
+                      <ProjectCard
                         project={project}
-                        repo={{
-                          ...repo,
-                          monthlyCommits: repo.totalCommits,
-                        }}
-                        flipped={isActive}
-                        onFlippedChange={() => toggleActive(repo.name)}
+                        monthlyCommits={repo.totalCommits ?? 0}
+                        isActive={isActive}
+                        onOpen={() => openDeepDive(repo.name, project)}
                       />
                     ) : (
                       <RepoCard
@@ -123,6 +124,15 @@ export function Building() {
           </>
         )}
       </div>
+
+      {/* One modal for the section, driven by whichever project is open. */}
+      {openProject && (
+        <DeepDiveModal
+          open={!!openProject}
+          onClose={() => setOpenProject(null)}
+          project={openProject}
+        />
+      )}
     </section>
   );
 }

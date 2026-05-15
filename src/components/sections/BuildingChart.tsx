@@ -6,14 +6,11 @@ import { useRef } from "react";
 type Repo = {
   /** GitHub repo name (used as the line's identity key) */
   name: string;
-  /** Curated project title — shown in the legend when this repo's card is
-   * on the front (project) face. Defaults to the repo name. */
+  /** Legend label — curated project title for enriched repos, else the
+   * repo name. */
   displayTitle: string;
   language: { name: string; color: string | null } | null;
   commitsByDay: number[];
-  /** True when this repo's card is currently flipped to the repo face.
-   * When true, the legend label switches from displayTitle → name. */
-  isFlipped: boolean;
 };
 
 type ChartData = {
@@ -154,7 +151,7 @@ export function BuildingChart({
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--text-faint)]">
             {focused
-              ? `${focused.isFlipped ? focused.name : focused.displayTitle} · last 30 days`
+              ? `${focused.displayTitle} · last 30 days`
               : "Commits per day · last 30 days"}
           </div>
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight text-[var(--text)]">
@@ -168,7 +165,7 @@ export function BuildingChart({
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
           {visibleRepos.map((r) => {
             const i = repoIndexFor(r);
-            const label = r.isFlipped ? r.name : r.displayTitle;
+            const label = r.displayTitle;
             return (
               <li
                 key={r.name}

@@ -100,9 +100,16 @@ export function DeepDiveModal({
                     href={project.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)] transition hover:text-white hover:border-white/[0.2]"
+                    className="group inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-sm font-medium text-black transition hover:bg-white/90"
                   >
-                    {urlLabel(project.url)} <span>↗</span>
+                    <span>
+                      {urlLabel(project.url) === "GitHub"
+                        ? "View on GitHub"
+                        : "Visit live site"}
+                    </span>
+                    <span className="transition-transform group-hover:translate-x-0.5">
+                      ↗
+                    </span>
                   </a>
                 )}
                 <button
