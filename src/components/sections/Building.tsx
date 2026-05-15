@@ -121,6 +121,7 @@ export function Building() {
                   commitsByDay: r.commitsByDay ?? [],
                 }))}
                 activeRepoName={activeRepoName}
+                onSelectRepo={toggleActive}
               />
             )}
             <div className="grid gap-5 md:grid-cols-2">

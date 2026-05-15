@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 type Repo = {
   /** GitHub repo name (used as the line's identity key) */
@@ -42,13 +42,19 @@ export function BuildingChart({
   chart,
   repos,
   activeRepoName,
+  onSelectRepo,
 }: {
   chart: ChartData;
   repos: Repo[];
-  /** When set, only this repo's line + total are rendered. */
+  /** When set, that repo's line is highlighted and the rest dim. */
   activeRepoName?: string | null;
+  /** Click a legend entry to select/deselect that repo. */
+  onSelectRepo?: (name: string) => void;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  // Day index under the cursor (null = not hovering the plot).
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const { scrollYProgress } = useScroll({
     target: wrapperRef,
@@ -129,6 +135,56 @@ export function BuildingChart({
     ? focused.commitsByDay.reduce((a, b) => a + b, 0)
     : chart.totalByDay.reduce((a, b) => a + b, 0);
 
+  // Map a pointer position to the nearest day index in the plot.
+  const idxFromEvent = (clientX: number): number | null => {
+    const el = svgRef.current;
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0) return null;
+    const xVb = ((clientX - r.left) / r.width) * W; // → viewBox x
+    const t = (xVb - padL) / plotW; // 0..1 across the plot
+    const idx = Math.round(t * (n - 1));
+    return Math.max(0, Math.min(n - 1, idx));
+  };
+
+  // Tooltip contents for the hovered day: per-repo counts (nonzero,
+  // desc) + the day total. null when not hovering.
+  const hover =
+    hoverIdx === null
+      ? null
+      : (() => {
+          const date = new Date(chart.days[hoverIdx] + "T00:00:00Z");
+          const label = date.toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: longWindow ? "numeric" : undefined,
+            timeZone: "UTC",
+          });
+          const rows = repos
+            .map((r, i) => ({
+              name: r.name,
+              title: r.displayTitle,
+              color: LINE_COLORS[i % LINE_COLORS.length],
+              count: r.commitsByDay[hoverIdx] ?? 0,
+            }))
+            .filter((row) => row.count > 0)
+            .sort((a, b) => b.count - a.count);
+          const total = chart.totalByDay[hoverIdx] ?? 0;
+          return { x: xAt(hoverIdx), label, rows, total };
+        })();
+
+  // Tooltip box geometry — flips to the left of the crosshair near the
+  // right edge so it never clips out of the viewBox.
+  const tipLineH = 13;
+  const tipPadX = 8;
+  const tipPadY = 7;
+  const tipW = 150;
+  const tipRows = hover ? hover.rows.length + 2 : 0; // date + rows + total
+  const tipH = tipRows * tipLineH + tipPadY * 2;
+  const tipFlip = hover ? hover.x + 12 + tipW > W - padR : false;
+  const tipX = hover ? (tipFlip ? hover.x - 12 - tipW : hover.x + 12) : 0;
+  const tipY = padT;
+
   return (
     <motion.div
       ref={wrapperRef}
@@ -153,23 +209,32 @@ export function BuildingChart({
           </div>
         </div>
 
-        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+        <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           {repos.map((r, i) => {
-            const dim = focused && focused.name !== r.name;
+            const isSel = focused?.name === r.name;
+            const dim = focused && !isSel;
             return (
-              <li
-                key={r.name}
-                className={`flex items-center gap-1.5 transition-opacity ${
-                  dim ? "opacity-40" : "opacity-100"
-                }`}
-              >
-                <span
-                  className="h-0.5 w-4 rounded-full"
-                  style={{ background: LINE_COLORS[i % LINE_COLORS.length] }}
-                />
-                <span className="font-mono text-[var(--text-muted)] truncate max-w-[200px]">
-                  {r.displayTitle}
-                </span>
+              <li key={r.name}>
+                <button
+                  type="button"
+                  onClick={() => onSelectRepo?.(r.name)}
+                  aria-pressed={isSel}
+                  className={`flex items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-opacity hover:bg-white/[0.04] ${
+                    dim ? "opacity-40 hover:opacity-100" : "opacity-100"
+                  }`}
+                >
+                  <span
+                    className="h-0.5 w-4 rounded-full"
+                    style={{ background: LINE_COLORS[i % LINE_COLORS.length] }}
+                  />
+                  <span
+                    className={`font-mono truncate max-w-[200px] ${
+                      isSel ? "text-[var(--text)]" : "text-[var(--text-muted)]"
+                    }`}
+                  >
+                    {r.displayTitle}
+                  </span>
+                </button>
               </li>
             );
           })}
@@ -177,6 +242,7 @@ export function BuildingChart({
       </div>
 
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full"
         role="img"
@@ -245,6 +311,125 @@ export function BuildingChart({
               />
             );
           })}
+
+        {/* Hover crosshair + per-repo dots + tooltip */}
+        {hover && (
+          <g pointerEvents="none">
+            <line
+              x1={hover.x}
+              x2={hover.x}
+              y1={padT}
+              y2={padT + plotH}
+              stroke="rgba(255,255,255,0.25)"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+            />
+            {repos.map((r, i) => {
+              const v = r.commitsByDay[hoverIdx as number] ?? 0;
+              if (v === 0) return null;
+              const isFocused = focused?.name === r.name;
+              const dim = focused && !isFocused;
+              return (
+                <circle
+                  key={r.name}
+                  cx={hover.x}
+                  cy={yAt(v)}
+                  r={isFocused ? 3.5 : 2.75}
+                  fill={LINE_COLORS[i % LINE_COLORS.length]}
+                  opacity={dim ? 0.25 : 1}
+                />
+              );
+            })}
+
+            <g transform={`translate(${tipX} ${tipY})`}>
+              <rect
+                width={tipW}
+                height={tipH}
+                rx={8}
+                fill="rgba(11,13,20,0.95)"
+                stroke="rgba(255,255,255,0.12)"
+                strokeWidth={1}
+              />
+              <text
+                x={tipPadX}
+                y={tipPadY + tipLineH - 3}
+                fill="rgba(255,255,255,0.6)"
+                fontSize={10}
+                fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+              >
+                {hover.label}
+              </text>
+              {hover.rows.map((row, ri) => (
+                <g
+                  key={row.name}
+                  transform={`translate(0 ${(ri + 1) * tipLineH})`}
+                >
+                  <circle
+                    cx={tipPadX + 3}
+                    cy={tipPadY + tipLineH - 7}
+                    r={3}
+                    fill={row.color}
+                  />
+                  <text
+                    x={tipPadX + 12}
+                    y={tipPadY + tipLineH - 3}
+                    fill="rgba(255,255,255,0.85)"
+                    fontSize={10}
+                    fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+                  >
+                    {row.title.length > 16
+                      ? row.title.slice(0, 15) + "…"
+                      : row.title}
+                  </text>
+                  <text
+                    x={tipW - tipPadX}
+                    y={tipPadY + tipLineH - 3}
+                    fill="rgba(255,255,255,0.85)"
+                    fontSize={10}
+                    fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+                    textAnchor="end"
+                  >
+                    {row.count}
+                  </text>
+                </g>
+              ))}
+              <g transform={`translate(0 ${(hover.rows.length + 1) * tipLineH})`}>
+                <text
+                  x={tipPadX}
+                  y={tipPadY + tipLineH - 3}
+                  fill="rgba(255,255,255,0.55)"
+                  fontSize={10}
+                  fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+                >
+                  total
+                </text>
+                <text
+                  x={tipW - tipPadX}
+                  y={tipPadY + tipLineH - 3}
+                  fill="rgba(255,255,255,0.9)"
+                  fontSize={10}
+                  fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+                  textAnchor="end"
+                >
+                  {hover.total}
+                </text>
+              </g>
+            </g>
+          </g>
+        )}
+
+        {/* Transparent capture layer — topmost so mousemove is reliable
+            across the whole plot regardless of the painted lines. */}
+        <rect
+          x={padL}
+          y={padT}
+          width={plotW}
+          height={plotH}
+          fill="transparent"
+          style={{ cursor: "crosshair" }}
+          onMouseMove={(e) => setHoverIdx(idxFromEvent(e.clientX))}
+          onMouseLeave={() => setHoverIdx(null)}
+        />
       </svg>
     </motion.div>
   );
