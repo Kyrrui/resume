@@ -7,7 +7,7 @@ export function Skills() {
     <section id="skills" className="relative py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <SectionHeader
-          index="04 /"
+          index="06 /"
           title="Stack"
           caption="What I reach for. Roughly grouped — strong opinions, loosely held."
         />

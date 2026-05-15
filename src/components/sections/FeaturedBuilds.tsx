@@ -8,7 +8,7 @@ export function FeaturedBuilds() {
     <section id="builds" className="relative py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <SectionHeader
-          index="01 /"
+          index="02 /"
           title="Selected Builds"
           caption="Personal projects and hackathon winners. The work that best represents how I think and what I ship."
           action={

@@ -1,10 +1,144 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import Image from "next/image";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useVelocity,
+} from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { profile } from "@/data/resume";
+
+// Coin geometry — front/back faces sit at ±COIN_HALF_THICKNESS, rim layers stack between.
+// 18px total thickness on a 256px disc ≈ 7% ratio (real silver-dollar proportions).
+const COIN_HALF_THICKNESS = 9; // px
+const RIM_LAYERS = 16;
 
 export function Hero() {
   const reduce = useReducedMotion();
+  // Front-face state. Starts with the silver coin shown so the page
+  // loads on the coin face; a short beat later the spin kicks in and
+  // eventually dissolves into the real portrait when it settles.
+  const [isFlipping, setIsFlipping] = useState(true);
+
+  // Tracked rotation; the halo behind the coin reacts to its velocity.
+  const rotateY = useMotionValue(0);
+  const rotateVelocity = useVelocity(rotateY);
+
+  // Halo dimensions are plain motion values so they can be driven by the
+  // velocity listener during the spin and smoothly animate() to a settled
+  // value when the coin lands. Defaults are the "original size" halo —
+  // scale 1, opacity 1 — which is what shows at rest.
+  const haloScale = useMotionValue(1);
+  const haloOpacity = useMotionValue(1);
+  // "velocity": halo follows rotation velocity (during spin).
+  // "settled": halo is animated independently to its rest state.
+  const haloMode = useRef<"velocity" | "settled">("settled");
+
+  // Rim opacity: 1 while the coin is flipping (silver edge visible at
+  // tilted angles), fades to 0 alongside the coin → portrait dissolve so
+  // the rim and the coin face disappear together — leaving a clean
+  // portrait, not a portrait-inside-a-silver-rim.
+  const rimOpacity = useMotionValue(1);
+
+  // Front-face cross-fade is now motion-driven so durations can vary by
+  // transition reason: instant when a flip starts, 2.5s when the spin
+  // dissolves to portrait, 500ms for hover toggles at rest.
+  const coinOpacity = useMotionValue(1);
+  const profileOpacity = useMotionValue(0);
+
+  // Hover state + ref. The ref is read inside flip() so we know whether
+  // the user is currently hovering when the spin ends (and therefore
+  // whether to skip the slow dissolve).
+  const [isHovered, setIsHovered] = useState(false);
+  const isHoveredRef = useRef(false);
+  const setHover = (v: boolean) => {
+    isHoveredRef.current = v;
+    setIsHovered(v);
+  };
+
+  // Velocity-driven halo updates while the coin is spinning.
+  useEffect(() => {
+    const unsubscribe = rotateVelocity.on("change", (v) => {
+      if (haloMode.current !== "velocity") return;
+      const t = Math.min(Math.abs(v) / 1500, 1);
+      haloScale.set(0.6 + t * (1.6 - 0.6));
+      haloOpacity.set(0.4 + t * (0.7 - 0.4));
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [rotateVelocity, haloScale, haloOpacity]);
+
+  const flip = async () => {
+    setIsFlipping(true);
+    haloMode.current = "velocity";
+    // Snap to coin face (no fade) for the start of the spin.
+    rimOpacity.set(1);
+    coinOpacity.set(1);
+    profileOpacity.set(0);
+    if (reduce) {
+      rotateY.set(0);
+      setIsFlipping(false);
+      haloMode.current = "settled";
+      haloScale.set(1);
+      haloOpacity.set(1);
+      if (!isHoveredRef.current) {
+        rimOpacity.set(0);
+        coinOpacity.set(0);
+        profileOpacity.set(1);
+      }
+      return;
+    }
+    // Spin from 1800deg (5 full rotations) decelerating to 0 — settles on the photo.
+    rotateY.set(1800);
+    await animate(rotateY, 0, {
+      duration: 5,
+      ease: [0.05, 0.6, 0.2, 1],
+    });
+    setIsFlipping(false);
+    // Hand the halo off from velocity-tracking to a smooth glide back to
+    // the original-size halo. Matches the 2.5s coin → portrait dissolve.
+    haloMode.current = "settled";
+    animate(haloScale, 1, { duration: 2.5, ease: "easeOut" });
+    animate(haloOpacity, 1, { duration: 2.5, ease: "easeOut" });
+    // If the user is hovering when the spin lands, keep the coin face
+    // visible — they're asking to see it. Otherwise do the slow dissolve.
+    if (!isHoveredRef.current) {
+      animate(rimOpacity, 0, { duration: 2.5, ease: "easeOut" });
+      animate(coinOpacity, 0, { duration: 2.5, ease: "easeOut" });
+      animate(profileOpacity, 1, { duration: 2.5, ease: "easeOut" });
+    }
+  };
+
+  // Hover at rest: cross-fade between the coin face and the portrait. Only
+  // active when not currently flipping (during a flip the coin face is
+  // pinned visible by flip()).
+  useEffect(() => {
+    if (isFlipping) return;
+    if (isHovered) {
+      animate(coinOpacity, 1, { duration: 0.5, ease: "easeOut" });
+      animate(profileOpacity, 0, { duration: 0.5, ease: "easeOut" });
+      animate(rimOpacity, 1, { duration: 0.5, ease: "easeOut" });
+    } else {
+      animate(coinOpacity, 0, { duration: 0.5, ease: "easeOut" });
+      animate(profileOpacity, 1, { duration: 0.5, ease: "easeOut" });
+      animate(rimOpacity, 0, { duration: 0.5, ease: "easeOut" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHovered]);
+
+  useEffect(() => {
+    // Show the profile for half a second on first load, then kick off the
+    // initial flip — reads as someone tossing the coin.
+    const t = setTimeout(() => {
+      flip();
+    }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <section id="top" className="relative pt-28 pb-20 md:pt-40 md:pb-28 overflow-hidden">
@@ -37,62 +171,180 @@ export function Hero() {
       </div>
 
       <div className="mx-auto max-w-6xl px-6 md:px-10">
-        {/* Status pill */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-1 text-xs font-mono uppercase tracking-wider text-emerald-300"
-        >
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
-          {profile.status}
-        </motion.div>
+        <div className="grid items-center gap-10 md:gap-12 md:grid-cols-[1fr_auto]">
+          <div>
+            {/* Name + role */}
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.05 }}
+              className="font-display text-5xl md:text-7xl font-semibold tracking-tight leading-[1.05]"
+            >
+              <span className="text-[var(--text)]">{profile.name}</span>
+              <br />
+              <span className="text-gradient">{profile.role}</span>
+            </motion.h1>
 
-        {/* Name + role */}
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.05 }}
-          className="mt-6 font-display text-5xl md:text-7xl font-semibold tracking-tight leading-[1.05]"
-        >
-          <span className="text-[var(--text)]">{profile.name}</span>
-          <br />
-          <span className="text-gradient">{profile.role}</span>
-        </motion.h1>
+            {/* Blurb */}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.15 }}
+              className="mt-8 max-w-2xl text-lg md:text-xl leading-relaxed text-[var(--text-muted)]"
+            >
+              {profile.blurb}
+            </motion.p>
 
-        {/* Blurb */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15 }}
-          className="mt-8 max-w-2xl text-lg md:text-xl leading-relaxed text-[var(--text-muted)]"
-        >
-          {profile.blurb}
-        </motion.p>
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.25 }}
+              className="mt-10 flex flex-wrap items-center gap-3"
+            >
+              <a
+                href="#builds"
+                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white text-black px-5 py-2.5 text-sm font-medium transition hover:bg-white/90"
+              >
+                <span>Selected builds</span>
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+              </a>
+              <a
+                href="#contact"
+                className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.02] px-5 py-2.5 text-sm text-[var(--text)] transition hover:bg-white/[0.05]"
+              >
+                <span className="font-mono text-[var(--text-muted)]">$</span>
+                <span>get in touch</span>
+                <span className="cursor-blink text-[var(--text-muted)]">▌</span>
+              </a>
+            </motion.div>
+          </div>
 
-        {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.25 }}
-          className="mt-10 flex flex-wrap items-center gap-3"
-        >
-          <a
-            href="#builds"
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white text-black px-5 py-2.5 text-sm font-medium transition hover:bg-white/90"
+          {/* Profile token — 3D coin: photo on the front, Ethereum logo on the back */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.2, 0.8, 0.2, 1] }}
+            className="relative order-first justify-self-center md:order-none md:justify-self-end [perspective:1200px]"
           >
-            <span>Selected builds</span>
-            <span className="transition-transform group-hover:translate-x-0.5">→</span>
-          </a>
-          <a
-            href={`mailto:${profile.email}`}
-            className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.02] px-5 py-2.5 text-sm text-[var(--text)] transition hover:bg-white/[0.05]"
-          >
-            <span className="font-mono text-[var(--text-muted)]">$</span>
-            <span>get in touch</span>
-            <span className="cursor-blink text-[var(--text-muted)]">▌</span>
-          </a>
-        </motion.div>
+            {/* Soft gradient halo — acts as the coin's shadow. Scale and
+                opacity are driven by the rotation's instantaneous velocity,
+                so it grows when the coin spins fast (token "high in the
+                air") and shrinks to a tight pool when the spin settles
+                ("low to the ground"). */}
+            <motion.div
+              aria-hidden
+              style={{ scale: haloScale, opacity: haloOpacity }}
+              className="pointer-events-none absolute -inset-6 rounded-full bg-gradient-to-br from-violet-500/30 via-cyan-400/20 to-indigo-500/20 blur-2xl"
+            />
+
+            {/* Clickable, motion-controlled rotator. rotateY is driven by a
+                motion value so its velocity is observable for the halo. */}
+            <motion.button
+              type="button"
+              onClick={flip}
+              onMouseEnter={() => setHover(true)}
+              onMouseLeave={() => setHover(false)}
+              style={{ rotateY }}
+              aria-label={`${profile.name} — flip the token`}
+              className="coin-spin relative size-40 md:size-64 cursor-pointer rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60"
+            >
+              {/* Rim — stacked silver rings along Z. The visible ring is
+                  inset 2px from each layer's outer edge so the face always
+                  has margin to fully cover the rim when viewed head-on
+                  (front OR back). Head-on the rim is invisible; only when
+                  the coin tilts does the cylinder side appear. Wrapped in
+                  a motion.div so the whole rim can dissolve alongside the
+                  coin → portrait cross-fade. */}
+              <motion.div
+                aria-hidden
+                style={{ opacity: rimOpacity }}
+                className="pointer-events-none absolute inset-0 [transform-style:preserve-3d]"
+              >
+                {Array.from({ length: RIM_LAYERS }).map((_, i) => {
+                  const z =
+                    -COIN_HALF_THICKNESS +
+                    (i * (COIN_HALF_THICKNESS * 2)) / (RIM_LAYERS - 1);
+                  return (
+                    <div
+                      key={i}
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 rounded-full"
+                      style={{
+                        transform: `translateZ(${z}px)`,
+                        background: "#cbd5e1",
+                        WebkitMask:
+                          "radial-gradient(circle closest-side, transparent 0 calc(100% - 12px), #000 calc(100% - 12px) calc(100% - 2px), transparent calc(100% - 2px) 100%)",
+                        mask: "radial-gradient(circle closest-side, transparent 0 calc(100% - 12px), #000 calc(100% - 12px) calc(100% - 2px), transparent calc(100% - 2px) 100%)",
+                      }}
+                    />
+                  );
+                })}
+              </motion.div>
+
+              {/* Front face — two stacked images whose opacities are driven
+                  by motion values so we can use different durations for
+                  different triggers: instant at the start of a flip,
+                  2.5s on the spin-landing dissolve, and 500ms for hover
+                  toggles at rest. */}
+              <div
+                className="absolute inset-0 overflow-hidden rounded-full [backface-visibility:hidden] shadow-[0_20px_60px_-15px_rgba(139,92,246,0.45)]"
+                style={{ transform: `translateZ(${COIN_HALF_THICKNESS}px)` }}
+              >
+                <motion.div
+                  style={{ opacity: coinOpacity }}
+                  className="pointer-events-none absolute inset-0"
+                >
+                  <Image
+                    src="/COIN_PROF_NO_BACKGROUND.png"
+                    alt={`${profile.name} — coin design`}
+                    width={320}
+                    height={320}
+                    priority
+                    className="size-full scale-[1.05] rounded-full object-cover"
+                  />
+                </motion.div>
+                <motion.div
+                  style={{ opacity: profileOpacity }}
+                  className="pointer-events-none absolute inset-0"
+                >
+                  <Image
+                    src="/prof_image_2.jpg"
+                    alt={`${profile.name} — profile photo`}
+                    width={320}
+                    height={320}
+                    priority
+                    // Zoom + anchor the scale at the face so the portrait
+                    // composition matches the coin design (head + upper
+                    // shoulders filling the disc, no skyline at the edges).
+                    className="size-full origin-[50%_28%] scale-[1.25] rounded-full object-cover"
+                  />
+                </motion.div>
+              </div>
+
+              {/* Back face — Ethereum token artwork. No decorative ring; image fills edge-to-edge. */}
+              <div
+                className="absolute inset-0 overflow-hidden rounded-full [backface-visibility:hidden] shadow-[0_20px_60px_-15px_rgba(139,92,246,0.45)]"
+                style={{
+                  transform: `translateZ(${-COIN_HALF_THICKNESS}px) rotateY(180deg)`,
+                }}
+              >
+                <Image
+                  src="/ETH_TOKEN_NO_BACKGROUND.png"
+                  alt="Ethereum token"
+                  width={320}
+                  height={320}
+                  priority
+                  // Slight upscale: the source PNG has transparent margins
+                  // around the silver disc; scaling up pushes the disc edge
+                  // out to the full rounded-full crop so the rim behind is
+                  // never visible head-on.
+                  className="pointer-events-none size-full scale-[1.06] rounded-full object-cover"
+                />
+              </div>
+            </motion.button>
+          </motion.div>
+        </div>
 
         {/* Meta strip — handle, location, links */}
         <motion.div
@@ -101,10 +353,15 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-px overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.015]"
         >
-          <MetaCell label="Handle" value={profile.handle} mono />
+          <MetaCell label="Web3 since" value={profile.since} mono />
           <MetaCell label="Based" value={profile.location} />
-          <MetaCell label="Github" value="@Kyrrui" href={profile.links.github} mono />
-          <MetaCell label="Farcaster" value="@kyrrui" href={profile.links.farcaster} mono />
+          <MetaCell label="Currently" value={profile.currently} />
+          <MetaCell
+            label="LinkedIn"
+            value="@kyle-c-bryant"
+            href={profile.links.linkedin}
+            mono
+          />
         </motion.div>
       </div>
     </section>

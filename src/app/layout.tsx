@@ -22,12 +22,12 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Kyrrui — Builder · Crypto × AI",
+  title: "Kyle Bryant — Builder · Crypto × AI",
   description:
     "Engineer working at the intersection of Ethereum, autonomous agents, and AI infrastructure. Selected builds, hackathon notables, and an evolving stack.",
   metadataBase: new URL("https://kyrrui.dev"),
   openGraph: {
-    title: "Kyrrui — Builder · Crypto × AI",
+    title: "Kyle Bryant — Builder · Crypto × AI",
     description:
       "Engineer working at the intersection of Ethereum, autonomous agents, and AI infrastructure.",
     type: "website",

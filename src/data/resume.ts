@@ -1,19 +1,18 @@
-// Placeholder content — swap with real data later.
+// Content sourced from Kyle's LinkedIn (May 2026). Edit freely.
 
 export const profile = {
-  handle: "kyrrui.eth",
-  name: "Kyrrui",
+  since: "2018",
+  name: "Kyle Bryant",
   role: "Builder · Crypto × AI",
-  status: "open to interesting collaborations",
-  location: "Remote / Worldwide",
+  location: "Greater Boston",
+  currently: "Fidelity Investments",
   blurb:
-    "Engineer working at the intersection of Ethereum, autonomous agents, and AI infrastructure. I ship at hackathons, contribute to protocols, and prototype the weird ideas.",
-  email: "hello@example.com",
+    "Senior Blockchain Data Engineer at Fidelity. I work where institutional finance meets Ethereum — building data infrastructure for on-chain analytics by day, accelerating personal projects with AI-assisted development and maintaining a home Ethereum validator by night.",
   links: {
-    github: "https://github.com/Kyrrui",
-    twitter: "https://x.com/kyrrui",
-    farcaster: "https://warpcast.com/kyrrui",
-    lens: "https://hey.xyz/u/kyrrui",
+    linkedin: "https://www.linkedin.com/in/kyle-c-bryant",
+    // TODO: fill these in with your real handles
+    github: "",
+    twitter: "",
   },
 };
 
@@ -30,57 +29,58 @@ export type FeaturedBuild = {
 
 export const featuredBuilds: FeaturedBuild[] = [
   {
-    title: "Synapse Protocol",
-    tagline: "On-chain coordination layer for autonomous AI agents",
+    title: "Brink — Intent-Based DeFi",
+    tagline: "Signature-based DCA, stop-loss, and limit orders on Ethereum",
     description:
-      "A smart-contract framework that lets LLM agents register intents, post bonded commitments, and settle outcomes trustlessly. Built around an ERC-7683-inspired intents primitive.",
-    year: "2025",
-    stack: ["Solidity", "Foundry", "TypeScript", "Viem", "LangGraph", "OpenAI"],
+      "Lead backend engineer for a suite of decentralized apps pioneering intent-based interactions. Users sign typed messages; an off-chain executor network competes to fulfill them on-chain across Ethereum and L2s.",
+    year: "2021 — 2024",
+    stack: ["TypeScript", "Solidity", "Ethereum", "L2s", "EIP-712", "Node.js"],
     highlights: [
-      "$24k in grants from a major L2 ecosystem fund",
-      "Live on three testnets; ~3k agent runs in pilot",
-      "Open-source — 480 stars in the first month",
+      "Owned backend, SDK, and execution infrastructure end-to-end",
+      "Pioneered the intent-based pattern for trustless DCA, stop-loss, and limit orders",
+      "Shipped on Ethereum mainnet and multiple Layer 2s",
     ],
-    badge: { label: "Active", tone: "mint" },
+    badge: { label: "Lead Eng", tone: "mint" },
   },
   {
-    title: "Hypercube",
-    tagline: "ZK proof aggregation playground",
+    title: "Boomerang — Universal Login",
+    tagline: "EIP-1077 / EIP-1078 Web3 UX, three years before AA was cool",
     description:
-      "Interactive explorer for Halo2 and Plonky3 circuits. Generates proofs in the browser via WASM and visualizes constraint systems as navigable graphs.",
-    year: "2024",
-    stack: ["Rust", "WASM", "Halo2", "Next.js", "WebGL"],
+      "Lead Blockchain Architect on Skedaddle's Boomerang platform. Re-architected onboarding around the Universal Login Standard, contributed upstream to UniversalLoginSDK, and shipped the BoomerangSDK node library for integrators.",
+    year: "2018 — 2019",
+    stack: ["Solidity", "EIP-1077", "EIP-1078", "Node.js"],
     highlights: [
-      "Featured in a popular ZK research newsletter",
-      "Used in two cryptography courses as teaching material",
+      "Caught a front-running vuln and rewrote the contracts from scratch — cheaper, safer, more flexible",
+      "Open-source contributions to UniversalLoginSDK",
+      "Best UX at ETHBerlin for the EIP-1077 integration",
     ],
     badge: { label: "Open Source", tone: "violet" },
   },
   {
-    title: "Mempool Mirror",
-    tagline: "Real-time MEV visibility for L2s",
+    title: "Home Ethereum Validator",
+    tagline: "Solo-staking on my own hardware",
     description:
-      "A streaming pipeline that ingests sequencer mempools across Base, Optimism, and Arbitrum, classifies tx archetypes with a small transformer model, and surfaces MEV opportunities in a live dashboard.",
-    year: "2024",
-    stack: ["Go", "Kafka", "Postgres", "PyTorch", "React", "D3"],
+      "Running a home validator keeps me close to the protocol-level realities of the network I engineer around — consensus dynamics, client diversity, MEV-Boost trade-offs, and slashing risk.",
+    year: "ongoing",
+    stack: ["Ethereum", "Consensus Clients", "Execution Clients", "MEV-Boost"],
     highlights: [
-      "Sub-200ms classification latency at p99",
-      "Processed 4M+ transactions during private beta",
+      "Solo-staked on residential hardware — no third-party operator in the loop",
+      "Hands-on with the full client stack (execution + consensus)",
     ],
-    badge: { label: "Beta", tone: "cyan" },
+    badge: { label: "Personal", tone: "cyan" },
   },
   {
-    title: "Onchain Oracle",
-    tagline: "LLM-powered Chainlink-style price feed",
+    title: "Claude Code Builds",
+    tagline: "AI-assisted prototyping for blockchain & developer tooling",
     description:
-      "A research prototype that aggregates DEX prices, news sentiment, and on-chain liquidity signals into a single feed with cryptoeconomic guarantees on its reasoning trace.",
-    year: "2023",
-    stack: ["Solidity", "Chainlink", "Anthropic", "TypeScript"],
+      "Active experiments using Claude Code to compress the build cycle on smart-contract integrations, on-chain data tools, and developer-focused web apps. This site is one of them.",
+    year: "2025 — present",
+    stack: ["Claude Code", "Next.js", "TypeScript", "Anthropic SDK"],
     highlights: [
-      "Top 5 at ETHGlobal Brussels",
-      "Selected for an a16z crypto research showcase",
+      "Tight iteration loop on greenfield ideas — ship the smallest credible version, then refine",
+      "Pattern-spotting: which problems benefit from AI-in-the-loop vs. hand-rolled",
     ],
-    badge: { label: "Research", tone: "amber" },
+    badge: { label: "Active", tone: "amber" },
   },
 ];
 
@@ -96,57 +96,30 @@ export type Hackathon = {
 
 export const hackathons: Hackathon[] = [
   {
-    event: "ETHGlobal",
-    location: "Bangkok",
-    date: "Nov 2024",
-    project: "Synapse Agents",
-    result: "1st — Grand Prize",
-    sponsors: ["Optimism", "Worldcoin", "Anthropic"],
+    event: "ETHBerlin",
+    location: "Berlin, DE",
+    date: "Sep 2018",
+    project: "Boomerang — EIP-1077 UX",
+    result: "Winner · Best UX",
+    sponsors: [],
+    tone: "gold",
+  },
+  {
+    event: "ETHBuenosAires",
+    location: "Buenos Aires, AR",
+    date: "—",
+    project: "Hackathon Winner",
+    result: "Winner",
+    sponsors: [],
     tone: "gold",
   },
   {
     event: "ETHDenver",
     location: "Denver, CO",
-    date: "Mar 2024",
-    project: "Hypercube",
-    result: "Top 10 Finalist",
-    sponsors: ["Polygon zkEVM", "Scroll"],
-    tone: "silver",
-  },
-  {
-    event: "ETHGlobal",
-    location: "Brussels",
-    date: "Jul 2024",
-    project: "Onchain Oracle",
-    result: "1st — Chainlink Track",
-    sponsors: ["Chainlink", "ENS"],
-    tone: "gold",
-  },
-  {
-    event: "ETHGlobal",
-    location: "New York",
-    date: "Sep 2023",
-    project: "Mempool Mirror",
-    result: "2nd — Infra Track",
-    sponsors: ["Base", "Alchemy"],
-    tone: "silver",
-  },
-  {
-    event: "Devfolio HackFS",
-    location: "Online",
-    date: "Aug 2023",
-    project: "ProofPostbox",
-    result: "Best Use of Filecoin",
-    sponsors: ["Filecoin", "Lighthouse"],
-    tone: "bronze",
-  },
-  {
-    event: "AI Engineer World's Fair",
-    location: "San Francisco",
-    date: "Jun 2024",
-    project: "AgentRouter",
-    result: "Finalist — Autonomous Agents",
-    sponsors: ["LangChain", "Pinecone"],
+    date: "—",
+    project: "Spirit of Build",
+    result: "Spirit of Build Award",
+    sponsors: [],
     tone: "finalist",
   },
 ];
@@ -163,55 +136,134 @@ export type Role = {
 
 export const work: Role[] = [
   {
-    company: "Glyph Protocol",
+    company: "Fidelity Investments",
+    title: "Senior Blockchain Data Engineer",
+    period: "Dec 2024 — Present",
+    location: "Boston, MA",
+    blurb:
+      "Building data infrastructure at the intersection of traditional finance and decentralized systems — bridging institutional rigor with on-chain analytics and Ethereum data.",
+    bullets: [
+      "On-chain data platform work supporting institutional analytics on Ethereum.",
+      "Bridging the gap between institutional infrastructure and decentralized data sources.",
+    ],
+    stack: ["Ethereum", "Data Engineering", "AWS"],
+  },
+  {
+    company: "Brink",
+    title: "Lead Backend Engineer",
+    period: "May 2021 — Dec 2024",
+    location: "Remote",
+    blurb:
+      "Backend, SDK, and execution infrastructure for multiple decentralized web apps pioneering intent-based interactions on Ethereum and L2s.",
+    bullets: [
+      "Pioneered intent-based applications enabling trustless DCA, stop-loss, and limit orders.",
+      "Designed signature-based execution flows across Ethereum and various Layer 2s.",
+      "Shipped both customer-facing SDKs and the executor infrastructure that fulfilled the intents.",
+    ],
+    stack: ["TypeScript", "Solidity", "Ethereum", "L2s", "Node.js"],
+  },
+  {
+    company: "Reggora",
+    title: "Lead Software Engineer",
+    period: "Oct 2019 — May 2021",
+    location: "Greater Boston",
+    blurb:
+      "Promoted from Senior to Lead. Ran the technical integrations team (5 engineers) handling third-party business APIs and the event-driven backbone of the product.",
+    bullets: [
+      "Led architecture and quality for a team of 5 on partner API integrations.",
+      "Designed and shipped an event-sourcing rewrite — consumer nodes, SQS, SNS, event forks, DynamoDB — enabling horizontal scaling and recovery from a critical DB failure.",
+      "Shipped features end-to-end across React, Flask, and MongoDB.",
+    ],
+    stack: ["Python", "Flask", "React", "AWS", "DynamoDB", "MongoDB"],
+  },
+  {
+    company: "Skedaddle",
     title: "Senior Smart Contract Engineer",
-    period: "2023 — Present",
-    location: "Remote",
+    period: "Aug 2018 — Oct 2019",
+    location: "Boston, MA",
     blurb:
-      "Lead engineer on an account-abstraction-native L2 stack used by ~40k weekly active wallets.",
+      "Lead Blockchain Architect on Boomerang. Built the platform around the Universal Login Standard (EIP-1077 / EIP-1078) — a then-novel Web3 UX paradigm.",
     bullets: [
-      "Owned the smart wallet stack: ERC-4337 bundler integration, paymaster economics, and recovery flows.",
-      "Cut average gas per user op by 38% via storage layout overhaul and assembly micro-optimizations.",
-      "Designed the audit-ready upgrade path that shipped without an incident across three major releases.",
+      "Caught a front-running vuln in the original contracts and rewrote them from scratch — cheaper, more versatile, more secure.",
+      "Open-source contributions to UniversalLoginSDK to support Boomerang's requirements.",
+      "Designed and built the BoomerangSDK node library for third-party integrators.",
+      "Represented the project at ETHBerlin (Best UX winner), the Status Cryptolife Hackathon, and Devcon 4.",
     ],
-    stack: ["Solidity", "Foundry", "TypeScript", "Viem", "ERC-4337"],
+    stack: ["Solidity", "EIP-1077", "EIP-1078", "Node.js"],
   },
   {
-    company: "Pulse Labs",
-    title: "Founding Engineer",
-    period: "2021 — 2023",
-    location: "Remote",
-    blurb:
-      "Second hire at a seed-stage applied-ML startup serving inference workloads to fintech customers.",
-    bullets: [
-      "Built the multi-tenant inference router serving 60M+ requests/month with 99.95% availability.",
-      "Designed the feature store and offline → online parity tests that became the team's debugging backbone.",
-      "Shipped customer-facing eval tooling that closed a six-figure renewal in week one.",
-    ],
-    stack: ["Python", "Go", "PyTorch", "Kafka", "Postgres", "AWS"],
-  },
-  {
-    company: "Northwind Systems",
+    company: "Hitachi Vantara",
     title: "Software Engineer",
-    period: "2019 — 2021",
-    location: "New York, NY",
+    period: "Jan 2017 — Aug 2018",
+    location: "Waltham, MA",
     blurb:
-      "Backend platform team supporting trading desks at a mid-sized quant fund.",
+      "Migrated and maintained internal projects; contributed to the design of worker nodes for Hitachi's ETL tool.",
     bullets: [
-      "Refactored the order routing service from a single binary into a typed, observable, fan-out pipeline.",
-      "Authored the team's first end-to-end latency SLO framework still in use today.",
+      "Updated internal projects from Ant to Maven.",
+      "Worked on high-level design of horizontally-scaling ETL worker nodes.",
+      "Contributed to an internal application platform.",
     ],
-    stack: ["Go", "C++", "Redis", "Kubernetes"],
+    stack: ["Java", "Maven", "ETL"],
+  },
+  {
+    company: "Amazon Robotics",
+    title: "Software Development Engineer",
+    period: "May 2015 — Jan 2017",
+    location: "Westborough, MA",
+    blurb:
+      "Internal tooling for the Enterprise Data Warehousing team — comparative metrics, extraction/aggregation, and cross-shard SQL execution.",
+    bullets: [
+      "Built data-accuracy tooling that surfaced discrepancies across the EDW.",
+      "Designed a web UI + backend for executing SQL across all database shards with failure reporting.",
+      "Heavy AWS day-to-day.",
+    ],
+    stack: ["Java", "AWS", "SQL"],
+  },
+];
+
+export type Education = {
+  school: string;
+  degree: string;
+  notes?: string;
+  period: string;
+  honors?: string[];
+};
+
+export const education: Education[] = [
+  {
+    school: "Worcester Polytechnic Institute",
+    degree: "B.S. Interactive Media and Game Development",
+    notes: "Minor in Computer Science",
+    period: "2011 — 2015",
+    honors: [
+      "Best 3D Video Game",
+      "Honorable Mention — Best Major Qualifying Project (Video Game)",
+    ],
   },
 ];
 
 export const skills = {
-  Languages: ["TypeScript", "Rust", "Solidity", "Python", "Go"],
-  "Smart Contracts": ["Foundry", "Hardhat", "Viem", "Wagmi", "ERC-4337", "ERC-7683"],
-  Frontend: ["Next.js", "React", "Tailwind", "RainbowKit", "Motion"],
-  "AI / ML": ["PyTorch", "LangChain", "LangGraph", "Anthropic SDK", "RAG", "Evals"],
-  Infra: ["AWS", "Postgres", "Redis", "Kafka", "Docker", "Terraform"],
-  Cryptography: ["Halo2", "Plonky3", "Circom", "Poseidon", "BLS"],
+  Languages: ["TypeScript", "Solidity", "Python", "Java"],
+  Blockchain: [
+    "Ethereum",
+    "Layer 2s",
+    "EIP-1077",
+    "EIP-1078",
+    "EIP-712",
+    "Account Abstraction",
+    "Validator Operations",
+  ],
+  Backend: ["Node.js", "Flask", "Event Sourcing", "SDK Design"],
+  Frontend: ["React", "Next.js"],
+  Data: [
+    "On-chain Analytics",
+    "Data Engineering",
+    "ETL",
+    "MongoDB",
+    "DynamoDB",
+  ],
+  Infra: ["AWS", "SQS", "SNS", "MEV-Boost", "Beacon Chain"],
+  "AI / Tooling": ["Claude Code", "Anthropic SDK", "AI-Assisted Dev"],
 };
 
 export const skillsFlat = Object.values(skills).flat();

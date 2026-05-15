@@ -28,7 +28,7 @@ export function Hackathons() {
     <section id="hackathons" className="relative py-24 md:py-32 bg-hex">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <SectionHeader
-          index="02 /"
+          index="03 /"
           title="Hackathons"
           caption="A few weekends I'm proud of. Real teams, tight deadlines, deployed contracts."
           action={

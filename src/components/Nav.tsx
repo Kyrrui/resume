@@ -3,16 +3,21 @@
 import { useEffect, useState } from "react";
 
 const items = [
+  { id: "building", label: "Building" },
   { id: "builds", label: "Builds" },
   { id: "hackathons", label: "Hackathons" },
   { id: "work", label: "Work" },
+  { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
   { id: "contact", label: "Contact" },
 ];
 
+const GITHUB_USER = "Kyrrui";
+
 export function Nav() {
-  const [active, setActive] = useState<string>("builds");
+  const [active, setActive] = useState<string>("building");
   const [scrolled, setScrolled] = useState(false);
+  const monthlyContributions = useMonthlyContributions(GITHUB_USER);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -50,13 +55,27 @@ export function Nav() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 md:px-10">
         <a
-          href="#top"
-          className="flex items-center gap-2 font-mono text-sm tracking-tight text-[var(--text)]"
+          href="https://github.com/Kyrrui"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-2 font-mono text-sm tracking-tight text-[var(--text)] transition-colors hover:text-white"
         >
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 pulse-dot" />
-          <span className="text-[var(--text-muted)]">0x</span>
-          <span>kyrrui</span>
-          <span className="text-[var(--text-faint)]">.eth</span>
+          <span>Kyrrui</span>
+          {monthlyContributions !== null && (
+            <>
+              <span className="text-[var(--text-faint)]">·</span>
+              <span
+                className="text-[var(--text-muted)]"
+                title="GitHub contributions (mostly commits, also PRs / issues / reviews) in the last 30 days"
+              >
+                {monthlyContributions}{" "}
+                <span className="text-[var(--text-faint)]">
+                  recent commit{monthlyContributions === 1 ? "" : "s"}
+                </span>
+              </span>
+            </>
+          )}
         </a>
 
         <ul className="hidden md:flex items-center gap-1 rounded-full border border-white/[0.07] bg-white/[0.02] p-1">
@@ -89,4 +108,72 @@ export function Nav() {
       </div>
     </nav>
   );
+}
+
+// Sums GitHub "contributions" (commits, PRs, issues opened, reviews) over the last 30 days.
+// Source: github-contributions-api.jogruber.de — unofficial mirror of the contributions graph.
+// Cached in localStorage for 1h to be a good citizen. If the request fails, the nav silently
+// falls back to just the name.
+const CACHE_KEY = "gh-monthly-contributions";
+const CACHE_TTL_MS = 60 * 60 * 1000;
+const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+type ContributionsResponse = {
+  contributions: { date: string; count: number }[];
+};
+
+async function fetchMonthlyContributions(username: string): Promise<number> {
+  const res = await fetch(
+    `https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=last`
+  );
+  if (!res.ok) throw new Error(`Contributions API ${res.status}`);
+  const data: ContributionsResponse = await res.json();
+  const cutoff = Date.now() - MONTH_MS;
+  return (data.contributions || [])
+    .filter((d) => new Date(d.date).getTime() >= cutoff)
+    .reduce((sum, d) => sum + (d.count || 0), 0);
+}
+
+function useMonthlyContributions(username: string): number | null {
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    try {
+      const raw = localStorage.getItem(`${CACHE_KEY}:${username}`);
+      if (raw) {
+        const cached = JSON.parse(raw) as { count: number; fetchedAt: number };
+        if (Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+          setCount(cached.count);
+          return;
+        }
+      }
+    } catch {
+      // ignore cache parse errors
+    }
+
+    fetchMonthlyContributions(username)
+      .then((n) => {
+        if (cancelled) return;
+        setCount(n);
+        try {
+          localStorage.setItem(
+            `${CACHE_KEY}:${username}`,
+            JSON.stringify({ count: n, fetchedAt: Date.now() })
+          );
+        } catch {
+          // ignore storage errors
+        }
+      })
+      .catch(() => {
+        // leave count as null — nav just shows the name
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [username]);
+
+  return count;
 }
