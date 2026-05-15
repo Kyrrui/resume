@@ -90,22 +90,22 @@ function BlockRect({
   const cornerOpacity = useTransform(drawn, [0.85, 1], [0, 1]);
 
   const bright = accent
-    ? "rgba(139,92,246,0.7)"
-    : "rgba(255,255,255,0.3)";
+    ? "rgba(167,139,250,0.5)"
+    : "rgba(255,255,255,0.28)";
   const ghost = accent
-    ? "rgba(139,92,246,0.16)"
-    : "rgba(255,255,255,0.08)";
+    ? "rgba(167,139,250,0.12)"
+    : "rgba(255,255,255,0.06)";
 
   return (
     <g>
-      {/* Always-visible blueprint outline */}
+      {/* Always-visible blueprint outline (no scroll/animation dep) */}
       <path d={d} stroke={ghost} strokeWidth={1.5} />
 
       {/* Scroll-built bright stroke on top */}
       <motion.path
         d={d}
         stroke={bright}
-        strokeWidth={1.75}
+        strokeWidth={1.5}
         strokeLinecap="round"
         style={{ pathLength: reduce ? 1 : drawn }}
       />
@@ -114,8 +114,8 @@ function BlockRect({
         <motion.circle
           cx={x + w}
           cy={y}
-          r={3}
-          fill="rgba(139,92,246,0.7)"
+          r={2.5}
+          fill="rgba(139,92,246,0.6)"
           style={{ opacity: reduce ? 0.7 : cornerOpacity }}
         />
       )}

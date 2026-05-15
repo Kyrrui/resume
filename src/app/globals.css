@@ -51,7 +51,10 @@ html {
 }
 
 body {
-  background: var(--bg);
+  /* Transparent so the fixed -z-10 decorative layer (grid, gradients,
+     vignette, scroll-built wireframe) shows through. html keeps the
+     opaque --bg canvas as the ultimate backdrop. */
+  background: transparent;
   color: var(--text);
   font-family: var(--font-sans), system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11";
