@@ -102,12 +102,14 @@ export function Hero() {
     // If the user is hovering when the spin lands, keep the coin face
     // visible (and the halo tight). Otherwise dissolve to portrait AND
     // bloom the halo to full size in lockstep — the moment of reveal.
+    // Keep the landing dissolve graceful even though the spin is now
+    // fast — snappy flip, deliberate reveal into the real portrait.
     if (!isHoveredRef.current) {
-      animate(rimOpacity, 0, { duration: 1.25, ease: "easeOut" });
-      animate(coinOpacity, 0, { duration: 1.25, ease: "easeOut" });
-      animate(profileOpacity, 1, { duration: 1.25, ease: "easeOut" });
-      animate(haloScale, 1, { duration: 1.25, ease: "easeOut" });
-      animate(haloOpacity, 1, { duration: 1.25, ease: "easeOut" });
+      animate(rimOpacity, 0, { duration: 2.5, ease: "easeOut" });
+      animate(coinOpacity, 0, { duration: 2.5, ease: "easeOut" });
+      animate(profileOpacity, 1, { duration: 2.5, ease: "easeOut" });
+      animate(haloScale, 1, { duration: 2.5, ease: "easeOut" });
+      animate(haloOpacity, 1, { duration: 2.5, ease: "easeOut" });
     }
   };
 
