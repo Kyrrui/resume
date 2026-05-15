@@ -12,10 +12,6 @@ export function Background() {
       {/* Grid */}
       <div className="absolute inset-0 bg-grid opacity-60" />
 
-      {/* Wireframe that assembles on scroll — above the grid, below the
-          radial/vignette so it stays ambient. */}
-      <BuildingBlocks />
-
       {/* Top radial fade so grid recedes at the bottom */}
       <div
         className="absolute inset-0"
@@ -36,6 +32,11 @@ export function Background() {
 
       {/* Noise */}
       <div className="noise" />
+
+      {/* Wireframe that assembles on scroll — rendered last so the
+          vignette/noise don't wash it out, but still inside the -z-10
+          fixed layer so it stays behind all page content. */}
+      <BuildingBlocks />
     </div>
   );
 }

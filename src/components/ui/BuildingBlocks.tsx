@@ -78,12 +78,12 @@ function BlockRect({
   // All hooks are called unconditionally; reduced-motion just swaps in
   // static values when wiring up the style props.
   const drawn = useTransform(progress, range, [0, 1], { clamp: true });
-  const drawnOpacity = useTransform(drawn, [0, 0.15, 1], [0, 1, 1]);
+  const drawnOpacity = useTransform(drawn, [0, 0.12, 1], [0, 1, 1]);
   const cornerOpacity = useTransform(drawn, [0.85, 1], [0, 1]);
 
   const stroke = accent
-    ? "rgba(139,92,246,0.22)"
-    : "rgba(255,255,255,0.07)";
+    ? "rgba(139,92,246,0.55)"
+    : "rgba(255,255,255,0.22)";
 
   return (
     <g>
@@ -94,10 +94,10 @@ function BlockRect({
         height={h}
         rx={6}
         stroke={stroke}
-        strokeWidth={1.25}
+        strokeWidth={1.75}
         style={{
           pathLength: reduce ? 1 : drawn,
-          opacity: reduce ? 0.5 : drawnOpacity,
+          opacity: reduce ? 0.6 : drawnOpacity,
         }}
       />
       {/* Corner tick — a tiny blueprint accent that pops once the box
