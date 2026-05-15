@@ -7,7 +7,6 @@ import recentRepos from "@/data/recent-repos.json";
 
 const items = [
   { id: "building", label: "Building" },
-  { id: "builds", label: "Builds" },
   { id: "hackathons", label: "Hackathons" },
   { id: "work", label: "Work" },
   { id: "education", label: "Education" },

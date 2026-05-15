@@ -7,7 +7,7 @@ export function Education() {
     <section id="education" className="relative py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <SectionHeader
-          index="05 /"
+          index="04 /"
           title="Education"
           caption="Where the foundations got built."
         />

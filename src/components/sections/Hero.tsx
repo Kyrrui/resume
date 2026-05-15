@@ -216,10 +216,10 @@ export function Hero() {
               className="mt-10 flex flex-wrap items-center gap-3"
             >
               <a
-                href="#builds"
+                href="#building"
                 className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white text-black px-5 py-2.5 text-sm font-medium transition hover:bg-white/90"
               >
-                <span>Selected builds</span>
+                <span>What I&apos;m building</span>
                 <span className="transition-transform group-hover:translate-x-0.5">→</span>
               </a>
               <a

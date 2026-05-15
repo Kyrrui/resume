@@ -6,7 +6,7 @@ export function Contact() {
     <section id="contact" className="relative py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <SectionHeader
-          index="07 /"
+          index="06 /"
           title="Let's build something"
           caption="I'm especially interested in agentic infra, novel cryptographic UX, and anything where the on-chain and AI sides actually need each other."
         />

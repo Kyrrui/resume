@@ -8,7 +8,7 @@ export function Work() {
     <section id="work" className="relative py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <SectionHeader
-          index="04 /"
+          index="03 /"
           title="Work History"
           caption="Where I've spent my full-time hours."
         />
