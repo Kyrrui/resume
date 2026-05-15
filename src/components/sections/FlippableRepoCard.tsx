@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { ProjectDetails } from "@/data/projects";
 import { relativeTime } from "@/lib/relative-time";
 import { DeepDiveModal } from "@/components/sections/DeepDiveModal";
+import { urlLabel } from "@/lib/url-label";
 
 export type Repo = {
   name: string;
@@ -130,7 +131,7 @@ function ProjectFace({
                 onKeyDown={stop}
                 className="shrink-0 inline-flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.02] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)] transition hover:text-white hover:border-white/[0.2]"
               >
-                Live <span>↗</span>
+                {urlLabel(project.url)} <span>↗</span>
               </a>
             )}
           </div>

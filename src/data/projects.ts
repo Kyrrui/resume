@@ -35,7 +35,7 @@ export type ProjectDetails = {
 
 export const projects: Record<string, ProjectDetails> = {
   QuinfallCrafting: {
-    title: "The Quinfall Crafting Workshop",
+    title: "QuinfallCrafting.com",
     subtitle: "Creator & Maintainer · 2026–Present",
     url: "https://quinfallcrafting.com",
     logo: "/quinfall-crafting-no-background.png",
@@ -92,7 +92,7 @@ export const projects: Record<string, ProjectDetails> = {
     logo: "/testamentum_bot.png",
     logoShape: "circle",
     description:
-      "Multi-server Discord bot serving the 4,300-verse Marcionite Testamentum to a religious community. 20+ slash commands, daily AI-generated content, and an interactive multiplayer scripture quiz.",
+      "Serves a Discord church community of over 100 members with the 4,300-verse Marcionite Testamentum. 20+ slash commands, daily AI-generated content, and an interactive multiplayer scripture quiz.",
     highlights: [
       "20+ slash commands across multiple servers: fuzzy search, paginated chapter reader, autocomplete on book/chapter/verse, inline reference expansion, and per-user persistent bookmarks.",
       "AI-powered Verse of the Day via OpenRouter (Kimi K2) with web-search context, history-aware prompting, and tuning that prevents fixation on current events.",

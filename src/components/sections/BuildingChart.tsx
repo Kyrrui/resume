@@ -92,10 +92,26 @@ export function BuildingChart({
       ];
   const rawMax = Math.max(1, ...allValues);
   const yMax = niceCeil(rawMax);
-  const yAt = (v: number) =>
-    padT + plotH - (Math.max(0, v) / yMax) * plotH;
+  // Log scale for the all-repos view compresses spikes so a 50-commit
+  // day doesn't flatten the rest of the lines. When focused on a single
+  // repo we use linear — you want the true shape of that one project,
+  // not a compressed approximation.
+  const useLogScale = !focused;
+  const yLogMax = useLogScale ? Math.log10(yMax + 1) : 1;
+  const yAt = (v: number) => {
+    const clamped = Math.max(0, v);
+    if (useLogScale) {
+      return padT + plotH - (Math.log10(clamped + 1) / yLogMax) * plotH;
+    }
+    return padT + plotH - (clamped / yMax) * plotH;
+  };
 
-  const ticks = [0, Math.round(yMax / 2), yMax];
+  // Middle tick value: on log, sqrt(yMax+1)-1 sits at the visual midpoint;
+  // on linear, it's just yMax/2.
+  const midTick = useLogScale
+    ? Math.max(1, Math.round(Math.sqrt(yMax + 1) - 1))
+    : Math.round(yMax / 2);
+  const ticks = [0, midTick, yMax];
 
   const formatShortDate = (iso: string) => {
     const d = new Date(iso + "T00:00:00Z");

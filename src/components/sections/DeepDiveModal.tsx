@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import type { ProjectDetails } from "@/data/projects";
+import { urlLabel } from "@/lib/url-label";
 
 export function DeepDiveModal({
   open,
@@ -102,7 +103,7 @@ export function DeepDiveModal({
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)] transition hover:text-white hover:border-white/[0.2]"
                   >
-                    Live <span>↗</span>
+                    {urlLabel(project.url)} <span>↗</span>
                   </a>
                 )}
                 <button

@@ -129,7 +129,10 @@ export function Nav() {
                 {profile.name}
               </span>
               <span className="mt-0.5 font-mono text-[11px] md:text-xs uppercase tracking-[0.15em] text-[var(--text-muted)]">
-                {profile.role}
+                {/* Shortened tagline — drops "Builder ·" so the nav strip
+                    isn't visually suffocated. Hero still uses profile.role
+                    for the full version. */}
+                {profile.role.replace(/^Builder · /, "")}
               </span>
             </span>
           </a>
