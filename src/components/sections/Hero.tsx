@@ -72,11 +72,11 @@ export function Hero() {
     rimOpacity.set(1);
     coinOpacity.set(1);
     profileOpacity.set(0);
-    // Tuck the halo down as the spin begins — same gentle 2.5s glide
-    // as the bloom on settle, but in reverse. Makes click-to-reflip
-    // feel as deliberate as the original landing.
-    animate(haloScale, SMALL_HALO_SCALE, { duration: 2.5, ease: "easeOut" });
-    animate(haloOpacity, SMALL_HALO_OPACITY, { duration: 2.5, ease: "easeOut" });
+    // Tuck the halo down as the spin begins — same gentle glide as the
+    // bloom on settle, but in reverse. Makes click-to-reflip feel as
+    // deliberate as the original landing.
+    animate(haloScale, SMALL_HALO_SCALE, { duration: 1.25, ease: "easeOut" });
+    animate(haloOpacity, SMALL_HALO_OPACITY, { duration: 1.25, ease: "easeOut" });
 
     if (reduce) {
       rotateY.set(0);
@@ -90,12 +90,12 @@ export function Hero() {
       }
       return;
     }
-    // Single deliberate rotation at constant velocity. ~90°/sec, so
+    // Single deliberate rotation at constant velocity. ~180°/sec, so
     // the back face (ETH) gets its moment in the middle of the flip
     // before the coin lands on the front face again.
     rotateY.set(360);
     await animate(rotateY, 0, {
-      duration: 4,
+      duration: 2,
       ease: "linear",
     });
     setIsFlipping(false);
@@ -103,11 +103,11 @@ export function Hero() {
     // visible (and the halo tight). Otherwise dissolve to portrait AND
     // bloom the halo to full size in lockstep — the moment of reveal.
     if (!isHoveredRef.current) {
-      animate(rimOpacity, 0, { duration: 2.5, ease: "easeOut" });
-      animate(coinOpacity, 0, { duration: 2.5, ease: "easeOut" });
-      animate(profileOpacity, 1, { duration: 2.5, ease: "easeOut" });
-      animate(haloScale, 1, { duration: 2.5, ease: "easeOut" });
-      animate(haloOpacity, 1, { duration: 2.5, ease: "easeOut" });
+      animate(rimOpacity, 0, { duration: 1.25, ease: "easeOut" });
+      animate(coinOpacity, 0, { duration: 1.25, ease: "easeOut" });
+      animate(profileOpacity, 1, { duration: 1.25, ease: "easeOut" });
+      animate(haloScale, 1, { duration: 1.25, ease: "easeOut" });
+      animate(haloOpacity, 1, { duration: 1.25, ease: "easeOut" });
     }
   };
 
@@ -118,7 +118,7 @@ export function Hero() {
     if (isFlipping) return;
     // Hover toggles the front face only — the halo stays at its
     // settled (full) size; it just isn't a hover-state cue.
-    const d = { duration: 0.5, ease: "easeOut" as const };
+    const d = { duration: 0.25, ease: "easeOut" as const };
     if (isHovered) {
       animate(coinOpacity, 1, d);
       animate(profileOpacity, 0, d);
