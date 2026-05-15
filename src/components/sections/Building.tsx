@@ -1,6 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import { BuildingChart } from "@/components/sections/BuildingChart";
+import { FlippableRepoCard } from "@/components/sections/FlippableRepoCard";
+import { projects } from "@/data/projects";
+import { relativeTime } from "@/lib/relative-time";
 import recentRepos from "@/data/recent-repos.json";
 
 type Commit = {
@@ -37,23 +43,17 @@ type RecentReposData = {
 
 const data = recentRepos as RecentReposData;
 
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const minutes = Math.round(diffMs / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  if (days < 14) return `${days}d ago`;
-  const weeks = Math.round(days / 7);
-  if (weeks < 9) return `${weeks}w ago`;
-  const months = Math.round(days / 30);
-  return `${months}mo ago`;
-}
-
 export function Building() {
   const repos = data.repos ?? [];
+
+  // At most one repo is "active" at a time — its line is what the chart
+  // focuses on. Clicking ANY card (flippable or plain) toggles whether
+  // that repo is the active one. Acts like a radio: click again to clear.
+  const [activeRepoName, setActiveRepoName] = useState<string | null>(null);
+
+  const toggleActive = (name: string) => {
+    setActiveRepoName((current) => (current === name ? null : name));
+  };
 
   return (
     <section id="building" className="relative py-24 md:py-32">
@@ -81,17 +81,44 @@ export function Building() {
                 chart={data.chart}
                 repos={repos.map((r) => ({
                   name: r.name,
+                  // Use the curated project title when this repo isn't
+                  // the active one; the chart swaps to the repo name
+                  // when it IS active (flippable cards have flipped to
+                  // the repo face; plain cards have been selected).
+                  displayTitle: projects[r.name]?.title ?? r.name,
                   language: r.language,
                   commitsByDay: r.commitsByDay ?? [],
+                  isFlipped: activeRepoName === r.name,
                 }))}
+                activeRepoName={activeRepoName}
               />
             )}
             <div className="grid gap-5 md:grid-cols-2">
-              {repos.map((repo, i) => (
-                <Reveal key={repo.fullName} delay={i * 0.05}>
-                  <RepoCard repo={repo} />
-                </Reveal>
-              ))}
+              {repos.map((repo, i) => {
+                const project = projects[repo.name];
+                const isActive = activeRepoName === repo.name;
+                return (
+                  <Reveal key={repo.fullName} delay={i * 0.05}>
+                    {project ? (
+                      <FlippableRepoCard
+                        project={project}
+                        repo={{
+                          ...repo,
+                          monthlyCommits: repo.totalCommits,
+                        }}
+                        flipped={isActive}
+                        onFlippedChange={() => toggleActive(repo.name)}
+                      />
+                    ) : (
+                      <RepoCard
+                        repo={repo}
+                        isActive={isActive}
+                        onSelect={() => toggleActive(repo.name)}
+                      />
+                    )}
+                  </Reveal>
+                );
+              })}
             </div>
           </>
         )}
@@ -100,9 +127,37 @@ export function Building() {
   );
 }
 
-function RepoCard({ repo }: { repo: Repo }) {
+function RepoCard({
+  repo,
+  isActive,
+  onSelect,
+}: {
+  repo: Repo;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const cardContent = (
-    <article className="card-lift relative h-full overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.015] p-6 md:p-7">
+    <article
+      role="button"
+      tabIndex={0}
+      aria-pressed={isActive}
+      aria-label={`${repo.name} — click to ${
+        isActive ? "deselect from chart" : "focus chart on this repo"
+      }`}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={`card-lift relative h-[400px] cursor-pointer overflow-hidden rounded-2xl border bg-white/[0.015] p-6 md:p-7 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 ${
+        isActive
+          ? "border-violet-400/40 ring-1 ring-violet-400/30"
+          : "border-white/[0.07]"
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -128,6 +183,8 @@ function RepoCard({ repo }: { repo: Repo }) {
             href={repo.url}
             target="_blank"
             rel="noreferrer"
+            onClick={stop}
+            onKeyDown={stop}
             className="shrink-0 text-[var(--text-muted)] transition hover:text-white"
             aria-label={`Open ${repo.name} on GitHub`}
           >

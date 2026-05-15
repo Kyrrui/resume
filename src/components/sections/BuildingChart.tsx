@@ -4,51 +4,61 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 
 type Repo = {
+  /** GitHub repo name (used as the line's identity key) */
   name: string;
+  /** Curated project title — shown in the legend when this repo's card is
+   * on the front (project) face. Defaults to the repo name. */
+  displayTitle: string;
   language: { name: string; color: string | null } | null;
   commitsByDay: number[];
+  /** True when this repo's card is currently flipped to the repo face.
+   * When true, the legend label switches from displayTitle → name. */
+  isFlipped: boolean;
 };
 
 type ChartData = {
   windowDays: number;
   days: string[];
   totalByDay: number[];
+  other?: {
+    repoCount: number;
+    totalCommits: number;
+    byDay: number[];
+  };
 };
 
 // Curated palette — each line gets a distinct hue regardless of the repo's
 // language (GitHub gives multiple TypeScript repos the same color, which
 // would collapse into one indistinguishable line).
 const LINE_COLORS = ["#a78bfa", "#22d3ee", "#f59e0b", "#34d399"];
+const OTHER_COLOR = "#9ca3af"; // muted gray for the aggregated "Other" line
 
 export function BuildingChart({
   chart,
   repos,
+  activeRepoName,
 }: {
   chart: ChartData;
   repos: Repo[];
+  /** When set, only this repo's line + total are rendered. */
+  activeRepoName?: string | null;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Scroll progress through the chart wrapper: 0 when the wrapper's TOP
-  // touches the viewport's BOTTOM (just entering), 1 when the wrapper's
-  // BOTTOM touches the viewport's TOP (just leaving).
   const { scrollYProgress } = useScroll({
     target: wrapperRef,
-    offset: ["start end", "end start"],
+    offset: ["start end", "start start"],
   });
 
-  // Map the middle portion of the scroll range to a 0→1 line-drawing
-  // progress. Outside that window the lines stay at their endpoints.
   const drawProgress = useTransform(
     scrollYProgress,
-    [0.15, 0.7],
+    [0.0, 0.5],
     [0, 1],
     { clamp: true }
   );
 
   if (!chart || chart.days.length === 0) return null;
 
-  // SVG geometry — viewBox space, not pixels. Tailwind sizes the wrapper.
   const W = 600;
   const H = 180;
   const padL = 36;
@@ -62,14 +72,28 @@ export function BuildingChart({
   const xAt = (i: number) =>
     n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
 
-  // Y scaled to the global max across total + per-repo.
-  const allValues = [
-    ...chart.totalByDay,
-    ...repos.flatMap((r) => r.commitsByDay),
-  ];
+  // Resolve the focused repo (if any). When set, the chart shows only its
+  // line; other repos and the aggregated "Other" series are hidden, and
+  // the header total switches to this repo's monthly total.
+  const focused = activeRepoName
+    ? repos.find((r) => r.name === activeRepoName) ?? null
+    : null;
+
+  const hasOther =
+    !focused && !!chart.other && chart.other.totalCommits > 0;
+
+  // Y scaled to the relevant values (linear scale — no log/sqrt).
+  const allValues = focused
+    ? focused.commitsByDay
+    : [
+        ...chart.totalByDay,
+        ...repos.flatMap((r) => r.commitsByDay),
+        ...(hasOther && chart.other ? chart.other.byDay : []),
+      ];
   const rawMax = Math.max(1, ...allValues);
   const yMax = niceCeil(rawMax);
-  const yAt = (v: number) => padT + plotH - (v / yMax) * plotH;
+  const yAt = (v: number) =>
+    padT + plotH - (Math.max(0, v) / yMax) * plotH;
 
   const ticks = [0, Math.round(yMax / 2), yMax];
 
@@ -90,6 +114,17 @@ export function BuildingChart({
     { i: n - 1, label: formatShortDate(chart.days[n - 1]) },
   ];
 
+  // Total to display in the header — focused repo's monthly count if a
+  // card is flipped, otherwise the overall total.
+  const headerTotal = focused
+    ? focused.commitsByDay.reduce((a, b) => a + b, 0)
+    : chart.totalByDay.reduce((a, b) => a + b, 0);
+
+  // Repos to render lines for: just the focused one if set, otherwise all.
+  const repoIndexFor = (r: Repo) =>
+    repos.findIndex((x) => x.name === r.name);
+  const visibleRepos = focused ? [focused] : repos;
+
   return (
     <motion.div
       ref={wrapperRef}
@@ -102,31 +137,48 @@ export function BuildingChart({
       <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--text-faint)]">
-            Commits per day · last 30 days
+            {focused
+              ? `${focused.isFlipped ? focused.name : focused.displayTitle} · last 30 days`
+              : "Commits per day · last 30 days"}
           </div>
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight text-[var(--text)]">
-            {chart.totalByDay.reduce((a, b) => a + b, 0)}{" "}
+            {headerTotal}{" "}
             <span className="text-[var(--text-muted)] font-normal text-lg">
-              total
+              {focused ? "commits" : "total"}
             </span>
           </div>
         </div>
 
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
-          {repos.map((r, i) => (
-            <li
-              key={r.name}
-              className="flex items-center gap-1.5 text-[var(--text)]"
-            >
+          {visibleRepos.map((r) => {
+            const i = repoIndexFor(r);
+            const label = r.isFlipped ? r.name : r.displayTitle;
+            return (
+              <li
+                key={r.name}
+                className="flex items-center gap-1.5 text-[var(--text)]"
+              >
+                <span
+                  className="h-0.5 w-4 rounded-full"
+                  style={{ background: LINE_COLORS[i % LINE_COLORS.length] }}
+                />
+                <span className="font-mono text-[var(--text-muted)] truncate max-w-[200px]">
+                  {label}
+                </span>
+              </li>
+            );
+          })}
+          {hasOther && chart.other && (
+            <li className="flex items-center gap-1.5 text-[var(--text)]">
               <span
                 className="h-0.5 w-4 rounded-full"
-                style={{ background: LINE_COLORS[i % LINE_COLORS.length] }}
+                style={{ background: OTHER_COLOR }}
               />
-              <span className="font-mono text-[var(--text-muted)] truncate max-w-[140px]">
-                {r.name}
+              <span className="font-mono text-[var(--text-muted)]">
+                other ({chart.other.repoCount})
               </span>
             </li>
-          ))}
+          )}
         </ul>
       </div>
 
@@ -134,9 +186,8 @@ export function BuildingChart({
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full"
         role="img"
-        aria-label={`Line chart of commits per day for the last ${chart.windowDays} days, with a separate line per repo and a total line.`}
+        aria-label={`Line chart of commits per day for the last ${chart.windowDays} days.`}
       >
-        {/* Y-axis gridlines + tick labels */}
         {ticks.map((t, i) => (
           <g key={i}>
             <line
@@ -161,7 +212,6 @@ export function BuildingChart({
           </g>
         ))}
 
-        {/* X-axis labels */}
         {xTicks.map((t, i) => (
           <text
             key={i}
@@ -178,17 +228,27 @@ export function BuildingChart({
           </text>
         ))}
 
-        {/* Per-repo lines (total is shown as a number above, not as a line). */}
-        {repos.map((r, i) => (
+        {visibleRepos.map((r) => (
           <ScrollPath
             key={r.name}
             d={buildPath(r.commitsByDay, xAt, yAt)}
-            stroke={LINE_COLORS[i % LINE_COLORS.length]}
+            stroke={LINE_COLORS[repoIndexFor(r) % LINE_COLORS.length]}
             strokeWidth={1.75}
             opacity={1}
             pathLength={drawProgress}
           />
         ))}
+
+        {hasOther && chart.other && (
+          <ScrollPath
+            d={buildPath(chart.other.byDay, xAt, yAt)}
+            stroke={OTHER_COLOR}
+            strokeWidth={1.5}
+            opacity={0.85}
+            strokeDasharray="4 4"
+            pathLength={drawProgress}
+          />
+        )}
       </svg>
     </motion.div>
   );
@@ -200,12 +260,14 @@ function ScrollPath({
   strokeWidth,
   opacity,
   pathLength,
+  strokeDasharray,
 }: {
   d: string;
   stroke: string;
   strokeWidth: number;
   opacity: number;
   pathLength: ReturnType<typeof useTransform<number, number>>;
+  strokeDasharray?: string;
 }) {
   return (
     <motion.path
@@ -216,6 +278,7 @@ function ScrollPath({
       strokeLinecap="round"
       strokeLinejoin="round"
       opacity={opacity}
+      strokeDasharray={strokeDasharray}
       style={{ pathLength }}
     />
   );

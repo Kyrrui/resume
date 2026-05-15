@@ -19,7 +19,12 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 const outPath = resolve(projectRoot, "src/data/recent-repos.json");
-const REPO_COUNT = 4;
+// Top N repos are shown as cards and as named lines in the chart.
+const TOP_REPO_COUNT = 4;
+// Total repos fetched. Commits in the (POOL - TOP) trailing repos roll up
+// into a single "Other" series on the chart, so the chart total stays
+// close to the user's real activity even though only the top 4 are named.
+const FETCH_REPO_COUNT = 20;
 const COMMITS_PER_REPO_DISPLAY = 4;
 // 30-day window for the per-day commit chart.
 const CHART_WINDOW_DAYS = 30;
@@ -89,7 +94,7 @@ const res = await fetch("https://api.github.com/graphql", {
   },
   body: JSON.stringify({
     query,
-    variables: { repoCount: REPO_COUNT, since: sinceIso },
+    variables: { repoCount: FETCH_REPO_COUNT, since: sinceIso },
   }),
 });
 
@@ -119,7 +124,7 @@ for (let i = CHART_WINDOW_DAYS - 1; i >= 0; i--) {
 }
 const dayIndex = new Map(days.map((d, i) => [d, i]));
 
-const repos = (payload.data.viewer.repositories.nodes || [])
+const allFetched = (payload.data.viewer.repositories.nodes || [])
   .filter((r) => r && !r.isArchived)
   .map((r) => {
     const allCommits = (r.defaultBranchRef?.target?.history?.nodes || []).map(
@@ -151,18 +156,32 @@ const repos = (payload.data.viewer.repositories.nodes || [])
         ? { name: r.primaryLanguage.name, color: r.primaryLanguage.color }
         : null,
       topics: (r.repositoryTopics?.nodes || []).map((n) => n.topic.name),
-      // Most recent N commits for display under each repo card.
       commits: allCommits.slice(0, COMMITS_PER_REPO_DISPLAY),
-      // Total commits in the chart window for this repo.
       totalCommits: allCommits.length,
-      // Per-day counts aligned to the shared `days` array.
       commitsByDay,
     };
   });
 
-// Total per-day across all repos (same length / order as `days`).
+// Top N go to the cards + named chart lines.
+const repos = allFetched.slice(0, TOP_REPO_COUNT);
+
+// Everything past the top N gets aggregated into an "Other" series — same
+// shape as a repo's commitsByDay so the chart can render it the same way.
+const otherByDay = new Array(days.length).fill(0);
+let otherRepoCount = 0;
+let otherTotalCommits = 0;
+for (const r of allFetched.slice(TOP_REPO_COUNT)) {
+  if (r.totalCommits === 0) continue;
+  otherRepoCount += 1;
+  otherTotalCommits += r.totalCommits;
+  for (let i = 0; i < days.length; i++) {
+    otherByDay[i] += r.commitsByDay[i] || 0;
+  }
+}
+
+// Total per-day across ALL fetched repos (named top + other).
 const totalByDay = days.map((_, i) =>
-  repos.reduce((sum, r) => sum + (r.commitsByDay[i] || 0), 0)
+  allFetched.reduce((sum, r) => sum + (r.commitsByDay[i] || 0), 0)
 );
 
 if (!existsSync(dirname(outPath))) {
@@ -179,6 +198,11 @@ writeFileSync(
         windowDays: CHART_WINDOW_DAYS,
         days,
         totalByDay,
+        other: {
+          repoCount: otherRepoCount,
+          totalCommits: otherTotalCommits,
+          byDay: otherByDay,
+        },
       },
       repos,
     },
@@ -188,5 +212,5 @@ writeFileSync(
 );
 
 console.log(
-  `[fetch-github-activity] Wrote ${repos.length} repos + ${days.length}-day chart series to ${outPath}`
+  `[fetch-github-activity] Wrote ${repos.length} named repos + ${otherRepoCount} aggregated as "Other" (${days.length}-day chart) to ${outPath}`
 );

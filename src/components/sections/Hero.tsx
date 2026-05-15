@@ -130,15 +130,25 @@ export function Hero() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHovered]);
 
+  // Wait for the three coin images to finish decoding before starting the
+  // initial flip — otherwise the spin can fire while the front face is
+  // still blank. onError also counts so a failed load can't hang the
+  // animation forever.
+  const TOTAL_COIN_IMAGES = 3;
+  const [imagesLoaded, setImagesLoaded] = useState(0);
+  const allImagesLoaded = imagesLoaded >= TOTAL_COIN_IMAGES;
+  const handleImageReady = () => setImagesLoaded((c) => c + 1);
+
   useEffect(() => {
-    // Show the profile for half a second on first load, then kick off the
-    // initial flip — reads as someone tossing the coin.
+    if (!allImagesLoaded) return;
+    // Show the front face for half a second once everything's painted,
+    // then kick off the initial flip — reads as someone tossing the coin.
     const t = setTimeout(() => {
       flip();
     }, 500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [allImagesLoaded]);
 
   return (
     <section id="top" className="relative pt-28 pb-20 md:pt-40 md:pb-28 overflow-hidden">
@@ -301,6 +311,8 @@ export function Hero() {
                     width={320}
                     height={320}
                     priority
+                    onLoad={handleImageReady}
+                    onError={handleImageReady}
                     className="size-full scale-[1.05] rounded-full object-cover"
                   />
                 </motion.div>
@@ -314,6 +326,8 @@ export function Hero() {
                     width={320}
                     height={320}
                     priority
+                    onLoad={handleImageReady}
+                    onError={handleImageReady}
                     // Zoom + anchor the scale at the face so the portrait
                     // composition matches the coin design (head + upper
                     // shoulders filling the disc, no skyline at the edges).
@@ -335,6 +349,8 @@ export function Hero() {
                   width={320}
                   height={320}
                   priority
+                  onLoad={handleImageReady}
+                  onError={handleImageReady}
                   // Slight upscale: the source PNG has transparent margins
                   // around the silver disc; scaling up pushes the disc edge
                   // out to the full rounded-full crop so the rim behind is
