@@ -122,7 +122,7 @@ export function Nav() {
                 className="h-full w-full origin-[50%_28%] scale-[1.25] object-cover"
               />
             </span>
-            <span className="flex flex-col leading-tight">
+            <span className="flex flex-col leading-tight whitespace-nowrap">
               <span className="font-display text-base md:text-lg font-semibold tracking-tight text-[var(--text)]">
                 {profile.name}
               </span>
