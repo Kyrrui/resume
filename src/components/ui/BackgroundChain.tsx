@@ -20,7 +20,7 @@ import {
 // the corner, so direction only ever changes at a block, and only
 // at row ends (not at every block).
 const PER_ROW = 4;
-const ROWS = 7;
+const ROWS = 12;
 const N = PER_ROW * ROWS;
 
 // Columns span the full page width.
