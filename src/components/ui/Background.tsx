@@ -1,5 +1,8 @@
+import { BuildingBlocks } from "@/components/ui/BuildingBlocks";
+
 // Decorative background — fixed full-viewport gradient orbs + grid +
-// noise. Server component.
+// noise + scroll-built gutter towers. Server component (the
+// scroll-driven towers are an isolated client child).
 export function Background() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -29,6 +32,11 @@ export function Background() {
 
       {/* Noise */}
       <div className="noise" />
+
+      {/* Side-gutter towers that construct on scroll — rendered last
+          so vignette/noise don't wash them out, still inside the
+          -z-10 fixed layer so they stay behind all page content. */}
+      <BuildingBlocks />
     </div>
   );
 }
