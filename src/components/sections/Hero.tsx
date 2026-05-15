@@ -116,21 +116,17 @@ export function Hero() {
   // pinned visible by flip()).
   useEffect(() => {
     if (isFlipping) return;
+    // Hover toggles the front face only — the halo stays at its
+    // settled (full) size; it just isn't a hover-state cue.
     const d = { duration: 0.5, ease: "easeOut" as const };
     if (isHovered) {
-      // Reveal the coin again, and tuck the halo back down to match.
       animate(coinOpacity, 1, d);
       animate(profileOpacity, 0, d);
       animate(rimOpacity, 1, d);
-      animate(haloScale, SMALL_HALO_SCALE, d);
-      animate(haloOpacity, SMALL_HALO_OPACITY, d);
     } else {
-      // Back to portrait — let the halo breathe at full size again.
       animate(coinOpacity, 0, d);
       animate(profileOpacity, 1, d);
       animate(rimOpacity, 0, d);
-      animate(haloScale, 1, d);
-      animate(haloOpacity, 1, d);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHovered]);
