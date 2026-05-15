@@ -72,19 +72,40 @@ export const projects: Record<string, ProjectDetails> = {
     ],
   },
 
-  // --- Stubs ready to fill in --------------------------------------------
-  // Uncomment and complete to surface a curated card for each repo. Until
-  // then, these repos show the plain GitHub-data card (commits only).
-  //
-  // resume: {
-  //   title: "",
-  //   subtitle: "",
-  //   url: "",
-  //   logo: "",
-  //   description: "",
-  //   highlights: [],
-  //   stack: [],
-  // },
+  resume: {
+    title: "KyleBryant.dev",
+    subtitle: "Creator · 2026–Present",
+    url: "https://kylebryant.dev",
+    logo: "/COIN_PROF_NO_BACKGROUND.png",
+    logoShape: "circle",
+    description:
+      "This site. Built collaboratively with Claude Code as a pair-programming partner — every section reads from a single data file. Next.js 16 static export, deployed continuously to Netlify.",
+    highlights: [
+      "Custom 3D coin in the hero: CSS 3D transforms + Motion control a flippable coin with rim, dissolve to portrait, and a velocity-tuned shadow.",
+      "Live GitHub activity section: build-time GraphQL fetch of public + private repos with a scroll-linked, draws-as-you-scroll line chart of commits per day.",
+      "Flippable project cards: front shows a curated pitch, back shows live commits; clicking any card focuses the chart on that repo's data.",
+      "Persistent identity strip in the nav: portrait + name + tagline cross-fade in once the user scrolls past the hero, so the name stays visible across long browsing sessions.",
+    ],
+    details: [
+      "Single source of truth: the nav's monthly commit count reads from the same JSON as the chart total — no third-party API, no drift.",
+      "Mobile-friendly coin rim: border-based ring rendering instead of CSS masks, and a lower layer count, so the 3D flip stays smooth on phone GPUs.",
+      "Hybrid chart Y-scale: log10 in the all-projects view (so a 50-commit day doesn't flatten everything else), linear when focused on a single repo (so the true shape shows).",
+      "Portal-rendered deep-dive modal escapes the card's 3D perspective context, blurs the page behind it, locks body scroll, and supports keyboard / backdrop dismiss.",
+      "Image-prep helpers: sharp-based scripts in /scripts trim alpha borders, mask coin images into circles, and process the ETH back-face — all reusable for future assets.",
+      "Static export with /scripts/fetch-github-activity.mjs as a prebuild step; Netlify env var GITHUB_TOKEN supplies repo + read:user scopes so private repo names + commits are baked into the build.",
+      "Contact form is a styled placeholder ready to wire to an email service; the actual email address is intentionally kept out of the bundle to avoid scraping.",
+    ],
+    stack: [
+      "Next.js 16",
+      "React 19",
+      "TypeScript",
+      "Tailwind v4",
+      "Motion",
+      "Netlify",
+      "Sharp",
+      "Claude Code",
+    ],
+  },
   "testamentum-bot": {
     title: "Testamentum Discord Bot",
     subtitle: "Creator & Maintainer · 2024–Present",

@@ -90,14 +90,14 @@ export function Hero() {
       }
       return;
     }
-    // Coin toss with an ease-in-out shape: gentle wind-up at the
-    // start, peak rotation in the middle, smooth settle at the end.
-    // No more "frantic opening rush" — the toss reads as someone
-    // calmly flipping a coin, not someone hurling it.
+    // Constant-velocity spin — no acceleration ramps, no deceleration
+    // landing. The coin turns at a steady, deliberate pace until it
+    // lands. 2 rotations in 4s = ~0.5 rotations/sec, the slow speed
+    // the previous ease-in-out only had at its very beginning.
     rotateY.set(720);
     await animate(rotateY, 0, {
-      duration: 3.5,
-      ease: [0.4, 0, 0.3, 1],
+      duration: 4,
+      ease: "linear",
     });
     setIsFlipping(false);
     // If the user is hovering when the spin lands, keep the coin face
