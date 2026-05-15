@@ -16,12 +16,21 @@ import {
 
 const N = 28;
 
-// Percent coordinates within the full-page layer.
-const LEFT_X = 15;
-const RIGHT_X = 79;
-const START_Y = 6;
-const END_Y = 96;
+// Columns the chain weaves through, spanning the full page width
+// (blocks march left -> right, not just hugging the sides).
+const COLS = [12, 30.5, 49, 67.5, 86];
+// First block sits right below the hero/profile card.
+const START_Y = 13;
+const END_Y = 95;
 const STEP = (END_Y - START_Y) / (N - 1);
+
+// Boustrophedon: 0,1,2,3,4,3,2,1,0,1,... so the chain sweeps fully
+// across the width and back as it descends.
+function colX(i: number) {
+  const period = 2 * (COLS.length - 1);
+  const t = i % period;
+  return COLS[t < COLS.length ? t : period - t];
+}
 
 // Scroll-progress window the whole chain builds across. Starts > 0 so
 // the chain is invisible while you're at the very top of the page.
@@ -42,7 +51,7 @@ type Node = {
 };
 
 const NODES: Node[] = Array.from({ length: N }, (_, i) => ({
-  x: i % 2 === 0 ? LEFT_X : RIGHT_X,
+  x: colX(i),
   y: START_Y + i * STEP,
   label: `#${BASE_BLOCK - i}`,
   accent: i % 4 === 3,
@@ -164,8 +173,8 @@ function Block({
       <motion.div
         className="grid place-items-center"
         style={{
-          width: "clamp(38px, 5.2vw, 60px)",
-          height: "clamp(38px, 5.2vw, 60px)",
+          width: "clamp(64px, 8.5vw, 110px)",
+          height: "clamp(64px, 8.5vw, 110px)",
           y: reduce ? 0 : ty,
           scale: reduce ? 1 : scale,
           opacity: reduce ? 1 : opacity,
@@ -182,7 +191,7 @@ function Block({
         <span
           className="font-mono"
           style={{
-            fontSize: "clamp(7px, 0.95vw, 10px)",
+            fontSize: "clamp(9px, 1.1vw, 13px)",
             letterSpacing: "0.04em",
             color: node.accent
               ? "rgba(167,139,250,0.34)"
