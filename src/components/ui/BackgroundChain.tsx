@@ -14,21 +14,21 @@ import {
 // scroll. Lives in page flow (full document height) behind all
 // content. Decorative; respects prefers-reduced-motion.
 
-const N = 16;
+const N = 28;
 
 // Percent coordinates within the full-page layer.
 const LEFT_X = 15;
 const RIGHT_X = 79;
-const START_Y = 14;
-const END_Y = 93;
+const START_Y = 6;
+const END_Y = 96;
 const STEP = (END_Y - START_Y) / (N - 1);
 
 // Scroll-progress window the whole chain builds across. Starts > 0 so
-// the chain is invisible while you're at the top of the page.
-const REVEAL_START = 0.05;
-const REVEAL_SPAN = 0.9;
-const SEG_DUR = 0.05;
-const BLK_DUR = 0.045;
+// the chain is invisible while you're at the very top of the page.
+const REVEAL_START = 0.03;
+const REVEAL_SPAN = 0.92;
+const SEG_DUR = 0.04;
+const BLK_DUR = 0.035;
 
 const BASE_BLOCK = 34124;
 
@@ -105,8 +105,10 @@ function Segment({
 }) {
   const my = (from.y + to.y) / 2;
   const d = `M ${from.x} ${from.y} L ${from.x} ${my} L ${to.x} ${my} L ${to.x} ${to.y}`;
-  // The link draws in just before its destination block lands.
-  const draw = useTransform(
+  // Solid line that fades in just before its destination block lands
+  // (opacity, not pathLength — pathLength under the heavy non-uniform
+  // viewBox scaling renders as a dashed artifact).
+  const opacity = useTransform(
     progress,
     [to.at - SEG_DUR, to.at],
     [0, 1],
@@ -120,7 +122,7 @@ function Segment({
       }
       strokeWidth={1}
       vectorEffect="non-scaling-stroke"
-      style={{ pathLength: reduce ? 1 : draw }}
+      style={{ opacity: reduce ? 1 : opacity }}
     />
   );
 }
