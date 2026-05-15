@@ -26,8 +26,6 @@ const outPath = resolve(projectRoot, "src/data/recent-repos.json");
 
 // How many owned repos to pull into the candidate pool.
 const FETCH_REPO_COUNT = 25;
-// Named (carded) repos per window — the rest aggregate into "Other".
-const TOP_REPO_COUNT = { 30: 4, 365: 8 };
 // Recent commits surfaced on a plain repo card (window-independent).
 const COMMITS_PER_REPO_DISPLAY = 4;
 // History pagination cap per repo (100 commits/page). 6 -> up to 600
@@ -211,26 +209,18 @@ function buildWindow(windowDays) {
     return { ...r, commitsByDay, totalCommits };
   });
 
-  // Rank by activity *within this window*, then split named vs Other.
+  // EVERY repo touched in this window, most-active first. No top-N cap
+  // and no "Other" bucket — the UI surfaces them all (the year window is
+  // gated behind a "show more" so the 30-day list stays tight).
   const active = scored
     .filter((r) => r.totalCommits > 0)
     .sort((a, b) => b.totalCommits - a.totalCommits);
-  const topN = TOP_REPO_COUNT[windowDays] ?? 4;
-  const named = active.slice(0, topN);
-  const rest = active.slice(topN);
-
-  const otherByDay = new Array(days.length).fill(0);
-  let otherTotalCommits = 0;
-  for (const r of rest) {
-    otherTotalCommits += r.totalCommits;
-    for (let i = 0; i < days.length; i++) otherByDay[i] += r.commitsByDay[i];
-  }
 
   const totalByDay = days.map((_, i) =>
     scored.reduce((sum, r) => sum + (r.commitsByDay[i] || 0), 0)
   );
 
-  const repos = named.map((r) => ({
+  const repos = active.map((r) => ({
     name: r.name,
     fullName: r.fullName,
     description: r.description,
@@ -245,17 +235,7 @@ function buildWindow(windowDays) {
     commitsByDay: r.commitsByDay,
   }));
 
-  return {
-    windowDays,
-    days,
-    totalByDay,
-    other: {
-      repoCount: rest.length,
-      totalCommits: otherTotalCommits,
-      byDay: otherByDay,
-    },
-    repos,
-  };
+  return { windowDays, days, totalByDay, repos };
 }
 
 const windows = {};
@@ -277,8 +257,7 @@ writeFileSync(
 console.log(
   `[fetch-github-activity] Wrote windows: ` +
     WINDOWS.map(
-      (w) =>
-        `${w}d=${windows[String(w)].repos.length} repos +${windows[String(w)].other.repoCount} other`
+      (w) => `${w}d=${windows[String(w)].repos.length} repos`
     ).join(", ") +
     ` -> ${outPath}`
 );

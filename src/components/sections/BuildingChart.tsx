@@ -27,7 +27,16 @@ type ChartData = {
 // Curated palette — each line gets a distinct hue regardless of the repo's
 // language (GitHub gives multiple TypeScript repos the same color, which
 // would collapse into one indistinguishable line).
-const LINE_COLORS = ["#a78bfa", "#22d3ee", "#f59e0b", "#34d399"];
+const LINE_COLORS = [
+  "#a78bfa", // violet
+  "#22d3ee", // cyan
+  "#f59e0b", // amber
+  "#34d399", // mint
+  "#f472b6", // pink
+  "#60a5fa", // blue
+  "#facc15", // yellow
+  "#fb7185", // rose
+];
 const OTHER_COLOR = "#9ca3af"; // muted gray for the aggregated "Other" line
 
 export function BuildingChart({
