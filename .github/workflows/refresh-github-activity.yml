@@ -1,0 +1,42 @@
+name: Refresh GitHub activity
+
+# Re-deploys the site on a schedule so the prebuild step
+# (scripts/fetch-github-activity.mjs) re-pulls fresh commit data into the
+# "Currently Building" section + the nav commit count.
+#
+# This does NOT fetch or commit data itself — src/data/recent-repos.json
+# is gitignored because it contains private repo names + commit messages.
+# Instead it pings a Netlify build hook; Netlify rebuilds with its
+# GITHUB_TOKEN env var and the private data only ever lands in the
+# deployed bundle, never in git history.
+#
+# Setup (one time):
+#   1. Netlify → Site settings → Build & deploy → Build hooks →
+#      "Add build hook" (branch: main). Copy the URL.
+#   2. GitHub → repo Settings → Secrets and variables → Actions →
+#      New repository secret:
+#        Name:  NETLIFY_BUILD_HOOK_URL
+#        Value: <the build hook URL>
+
+on:
+  schedule:
+    # 12:00 UTC daily. Adjust the cron if you want it more/less often;
+    # each run costs one Netlify build.
+    - cron: "0 12 * * *"
+  # Lets you trigger a refresh by hand from the Actions tab.
+  workflow_dispatch: {}
+
+jobs:
+  trigger-rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Netlify build hook
+        env:
+          HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "::error::NETLIFY_BUILD_HOOK_URL secret is not set. See the setup notes at the top of this workflow."
+            exit 1
+          fi
+          curl --fail --silent --show-error -X POST -d '{}' "$HOOK_URL"
+          echo "Netlify build triggered — fresh commit data will be live after the deploy completes."
