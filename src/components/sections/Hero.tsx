@@ -72,10 +72,11 @@ export function Hero() {
     rimOpacity.set(1);
     coinOpacity.set(1);
     profileOpacity.set(0);
-    // Tuck the halo down while the coin is mid-toss. Quick animation so
-    // it doesn't pop on a hover-triggered re-flip.
-    animate(haloScale, SMALL_HALO_SCALE, { duration: 0.3, ease: "easeOut" });
-    animate(haloOpacity, SMALL_HALO_OPACITY, { duration: 0.3, ease: "easeOut" });
+    // Tuck the halo down as the spin begins — same gentle 2.5s glide
+    // as the bloom on settle, but in reverse. Makes click-to-reflip
+    // feel as deliberate as the original landing.
+    animate(haloScale, SMALL_HALO_SCALE, { duration: 2.5, ease: "easeOut" });
+    animate(haloOpacity, SMALL_HALO_OPACITY, { duration: 2.5, ease: "easeOut" });
 
     if (reduce) {
       rotateY.set(0);
