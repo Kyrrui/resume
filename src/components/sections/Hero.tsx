@@ -6,7 +6,6 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
-  useVelocity,
 } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { profile } from "@/data/resume";
@@ -21,6 +20,14 @@ const COIN_HALF_THICKNESS = 9; // px
 // read as a solid cylinder when the coin is tilted.
 const RIM_LAYERS = 10;
 
+// Halo size while the coin is showing (mid-flip, at rest on the coin
+// face, or hovered into the coin face): kept tight so the spinning coin
+// doesn't drag a giant bloom around with it. Bloomed back to (1, 1)
+// when the portrait is revealed — that's the moment the halo gets to
+// breathe.
+const SMALL_HALO_SCALE = 0.6;
+const SMALL_HALO_OPACITY = 0.4;
+
 export function Hero() {
   const reduce = useReducedMotion();
   // Front-face state. Starts with the silver coin shown so the page
@@ -28,19 +35,14 @@ export function Hero() {
   // eventually dissolves into the real portrait when it settles.
   const [isFlipping, setIsFlipping] = useState(true);
 
-  // Tracked rotation; the halo behind the coin reacts to its velocity.
+  // Tracked rotation (drives the coin spin via style={{ rotateY }}).
   const rotateY = useMotionValue(0);
-  const rotateVelocity = useVelocity(rotateY);
 
-  // Halo dimensions are plain motion values so they can be driven by the
-  // velocity listener during the spin and smoothly animate() to a settled
-  // value when the coin lands. Defaults are the "original size" halo —
-  // scale 1, opacity 1 — which is what shows at rest.
-  const haloScale = useMotionValue(1);
-  const haloOpacity = useMotionValue(1);
-  // "velocity": halo follows rotation velocity (during spin).
-  // "settled": halo is animated independently to its rest state.
-  const haloMode = useRef<"velocity" | "settled">("settled");
+  // Halo motion values. Start small/dim — the page loads on the coin
+  // face, where the halo should be tight. The halo only blooms to full
+  // size when the portrait is revealed at the end of the spin.
+  const haloScale = useMotionValue(SMALL_HALO_SCALE);
+  const haloOpacity = useMotionValue(SMALL_HALO_OPACITY);
 
   // Rim opacity: 1 while the coin is flipping (silver edge visible at
   // tilted angles), fades to 0 alongside the coin → portrait dissolve so
@@ -64,57 +66,45 @@ export function Hero() {
     setIsHovered(v);
   };
 
-  // Velocity-driven halo updates while the coin is spinning.
-  useEffect(() => {
-    const unsubscribe = rotateVelocity.on("change", (v) => {
-      if (haloMode.current !== "velocity") return;
-      const t = Math.min(Math.abs(v) / 1500, 1);
-      haloScale.set(0.6 + t * (1.6 - 0.6));
-      haloOpacity.set(0.4 + t * (0.7 - 0.4));
-    });
-    return () => {
-      unsubscribe();
-    };
-  }, [rotateVelocity, haloScale, haloOpacity]);
-
   const flip = async () => {
     setIsFlipping(true);
-    haloMode.current = "velocity";
-    // Snap to coin face (no fade) for the start of the spin.
+    // Snap to the coin face (no fade) for the start of the spin.
     rimOpacity.set(1);
     coinOpacity.set(1);
     profileOpacity.set(0);
+    // Tuck the halo down while the coin is mid-toss. Quick animation so
+    // it doesn't pop on a hover-triggered re-flip.
+    animate(haloScale, SMALL_HALO_SCALE, { duration: 0.3, ease: "easeOut" });
+    animate(haloOpacity, SMALL_HALO_OPACITY, { duration: 0.3, ease: "easeOut" });
+
     if (reduce) {
       rotateY.set(0);
       setIsFlipping(false);
-      haloMode.current = "settled";
-      haloScale.set(1);
-      haloOpacity.set(1);
       if (!isHoveredRef.current) {
         rimOpacity.set(0);
         coinOpacity.set(0);
         profileOpacity.set(1);
+        haloScale.set(1);
+        haloOpacity.set(1);
       }
       return;
     }
-    // Spin from 1800deg (5 full rotations) decelerating to 0 — settles on the photo.
+    // Spin from 1800deg (5 full rotations) decelerating to 0.
     rotateY.set(1800);
     await animate(rotateY, 0, {
       duration: 5,
       ease: [0.05, 0.6, 0.2, 1],
     });
     setIsFlipping(false);
-    // Hand the halo off from velocity-tracking to a smooth glide back to
-    // the original-size halo. Matches the 2.5s coin → portrait dissolve.
-    haloMode.current = "settled";
-    animate(haloScale, 1, { duration: 2.5, ease: "easeOut" });
-    animate(haloOpacity, 1, { duration: 2.5, ease: "easeOut" });
     // If the user is hovering when the spin lands, keep the coin face
-    // visible — they're asking to see it. Otherwise do the slow dissolve.
+    // visible (and the halo tight). Otherwise dissolve to portrait AND
+    // bloom the halo to full size in lockstep — the moment of reveal.
     if (!isHoveredRef.current) {
       animate(rimOpacity, 0, { duration: 2.5, ease: "easeOut" });
       animate(coinOpacity, 0, { duration: 2.5, ease: "easeOut" });
       animate(profileOpacity, 1, { duration: 2.5, ease: "easeOut" });
+      animate(haloScale, 1, { duration: 2.5, ease: "easeOut" });
+      animate(haloOpacity, 1, { duration: 2.5, ease: "easeOut" });
     }
   };
 
@@ -123,14 +113,21 @@ export function Hero() {
   // pinned visible by flip()).
   useEffect(() => {
     if (isFlipping) return;
+    const d = { duration: 0.5, ease: "easeOut" as const };
     if (isHovered) {
-      animate(coinOpacity, 1, { duration: 0.5, ease: "easeOut" });
-      animate(profileOpacity, 0, { duration: 0.5, ease: "easeOut" });
-      animate(rimOpacity, 1, { duration: 0.5, ease: "easeOut" });
+      // Reveal the coin again, and tuck the halo back down to match.
+      animate(coinOpacity, 1, d);
+      animate(profileOpacity, 0, d);
+      animate(rimOpacity, 1, d);
+      animate(haloScale, SMALL_HALO_SCALE, d);
+      animate(haloOpacity, SMALL_HALO_OPACITY, d);
     } else {
-      animate(coinOpacity, 0, { duration: 0.5, ease: "easeOut" });
-      animate(profileOpacity, 1, { duration: 0.5, ease: "easeOut" });
-      animate(rimOpacity, 0, { duration: 0.5, ease: "easeOut" });
+      // Back to portrait — let the halo breathe at full size again.
+      animate(coinOpacity, 0, d);
+      animate(profileOpacity, 1, d);
+      animate(rimOpacity, 0, d);
+      animate(haloScale, 1, d);
+      animate(haloOpacity, 1, d);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHovered]);
