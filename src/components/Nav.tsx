@@ -90,20 +90,18 @@ export function Nav() {
             }`}
           >
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 pulse-dot" />
-            <span>Kyrrui</span>
-            {monthlyCommits !== null && (
-              <>
-                <span className="text-[var(--text-faint)]">·</span>
-                <span
-                  className="text-[var(--text-muted)]"
-                  title="Commits over the last 30 days across the top recent repos (same source as the Currently Building chart)."
-                >
-                  {monthlyCommits}{" "}
-                  <span className="text-[var(--text-faint)]">
-                    recent commit{monthlyCommits === 1 ? "" : "s"}
-                  </span>
+            {monthlyCommits !== null ? (
+              <span
+                className="text-[var(--text-muted)]"
+                title="Commits over the last 30 days across the top recent repos (same source as the Currently Building chart)."
+              >
+                {monthlyCommits}{" "}
+                <span className="text-[var(--text-faint)]">
+                  recent commit{monthlyCommits === 1 ? "" : "s"}
                 </span>
-              </>
+              </span>
+            ) : (
+              <span className="text-[var(--text-muted)]">GitHub</span>
             )}
           </a>
 
