@@ -1,4 +1,5 @@
 import { Background } from "@/components/ui/Background";
+import { BackgroundChain } from "@/components/ui/BackgroundChain";
 import { Nav } from "@/components/Nav";
 import { Hero } from "@/components/sections/Hero";
 import { Building } from "@/components/sections/Building";
@@ -14,6 +15,7 @@ export default function Home() {
       <Background />
       <Nav />
       <main className="relative flex flex-1 flex-col">
+        <BackgroundChain />
         <Hero />
         <Building />
         <Hackathons />
