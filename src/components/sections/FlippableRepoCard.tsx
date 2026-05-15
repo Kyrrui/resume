@@ -98,25 +98,28 @@ function ProjectFace({
     <article className="relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.015] p-6 md:p-7 [grid-area:1/1] [backface-visibility:hidden] transition-colors hover:bg-white/[0.025]">
       {/* Logo + title row */}
       <div className="flex items-start gap-4">
-        {project.logo && (
-          <div
-            className={`inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden bg-white/[0.03] ${
-              project.logoShape === "circle" ? "rounded-full" : "rounded-xl"
-            }`}
-          >
+        {project.logo &&
+          (project.logoShape === "circle" ? (
+            <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/[0.03]">
+              <Image
+                src={project.logo}
+                alt=""
+                width={112}
+                height={112}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            // Tile-shape logos render bare — they already have transparent
+            // backgrounds and their own visual frame.
             <Image
               src={project.logo}
               alt=""
               width={112}
               height={112}
-              className={`h-full w-full ${
-                project.logoShape === "circle"
-                  ? "object-cover"
-                  : "object-contain"
-              }`}
+              className="h-14 w-14 shrink-0 object-contain"
             />
-          </div>
-        )}
+          ))}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-display text-lg font-semibold tracking-tight text-[var(--text)]">

@@ -62,27 +62,26 @@ export function DeepDiveModal({
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/[0.06] bg-[var(--bg-elev)]/95 px-6 py-5 backdrop-blur md:px-8">
               <div className="flex items-start gap-4 min-w-0">
-                {project.logo && (
-                  <div
-                    className={`hidden sm:inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden bg-white/[0.03] ${
-                      project.logoShape === "circle"
-                        ? "rounded-full"
-                        : "rounded-xl"
-                    }`}
-                  >
+                {project.logo &&
+                  (project.logoShape === "circle" ? (
+                    <div className="hidden sm:inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/[0.03]">
+                      <Image
+                        src={project.logo}
+                        alt=""
+                        width={112}
+                        height={112}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
                     <Image
                       src={project.logo}
                       alt=""
                       width={112}
                       height={112}
-                      className={`h-full w-full ${
-                        project.logoShape === "circle"
-                          ? "object-cover"
-                          : "object-contain"
-                      }`}
+                      className="hidden h-14 w-14 shrink-0 object-contain sm:inline-block"
                     />
-                  </div>
-                )}
+                  ))}
                 <div className="min-w-0">
                   <h3 className="font-display text-xl font-semibold tracking-tight text-[var(--text)] md:text-2xl">
                     {project.title}
