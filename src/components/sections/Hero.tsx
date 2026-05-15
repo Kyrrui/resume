@@ -90,11 +90,10 @@ export function Hero() {
       }
       return;
     }
-    // Constant-velocity spin — no acceleration ramps, no deceleration
-    // landing. The coin turns at a steady, deliberate pace until it
-    // lands. 2 rotations in 4s = ~0.5 rotations/sec, the slow speed
-    // the previous ease-in-out only had at its very beginning.
-    rotateY.set(720);
+    // Single deliberate rotation at constant velocity. ~90°/sec, so
+    // the back face (ETH) gets its moment in the middle of the flip
+    // before the coin lands on the front face again.
+    rotateY.set(360);
     await animate(rotateY, 0, {
       duration: 4,
       ease: "linear",
