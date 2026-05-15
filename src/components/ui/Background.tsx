@@ -1,8 +1,5 @@
-import { BuildingBlocks } from "@/components/ui/BuildingBlocks";
-
 // Decorative background — fixed full-viewport gradient orbs + grid +
-// scroll-built wireframe + noise. Server component (the scroll-driven
-// wireframe is an isolated client child).
+// noise. Server component.
 export function Background() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -32,11 +29,6 @@ export function Background() {
 
       {/* Noise */}
       <div className="noise" />
-
-      {/* Wireframe that assembles on scroll — rendered last so the
-          vignette/noise don't wash it out, but still inside the -z-10
-          fixed layer so it stays behind all page content. */}
-      <BuildingBlocks />
     </div>
   );
 }
