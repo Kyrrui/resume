@@ -21,6 +21,9 @@ export type Hackathon = {
   date: string;
   project: string;
   result: string;
+  /** Tight one-liner shown on the card. */
+  summary?: string;
+  /** Full write-up shown in the modal. */
   description?: string;
   sponsors: string[];
   tone: "gold" | "silver" | "bronze" | "finalist";
@@ -42,6 +45,8 @@ export const hackathons: Hackathon[] = [
     date: "February 2019",
     project: "Universal Wallet",
     result: "Spirit of Build Award",
+    summary:
+      "An Ethereum browser wallet with a cutting-edge UX — judged the most complete end-to-end product.",
     description:
       "Co-created 'Universal Wallet' at the ETHDenver Hackathon. Recognized as the most complete end-to-end product. Built using Solidity, React, Create2, Universal Logins, and Wyre. The Universal Wallet is an Ethereum web browser wallet with a cutting edge user experience.",
     sponsors: ["Solidity", "React", "Create2", "Universal Logins", "Wyre"],
@@ -53,6 +58,8 @@ export const hackathons: Hackathon[] = [
     date: "September 2018",
     project: "AllAboard.xyz",
     result: "Best UX",
+    summary:
+      "Best-UX winner — an early take on Universal Login and meta-transactions.",
     description:
       "Co-created 'All Aboard!' at the ETHBerlin Hackathon. Recognized as the winner for best UX in a hackathon project. Built using Solidity, React, and new concepts such as Universal Login by Alex Van de Sande, and Meta Transactions by Austin Thomas Griffith.",
     sponsors: ["Solidity", "React", "Universal Login", "Meta Transactions"],
@@ -64,6 +71,8 @@ export const hackathons: Hackathon[] = [
     date: "May 2018",
     project: "CryptoAgainstHumanity.io",
     result: "Overall Winner",
+    summary:
+      "Overall winner — on-chain Cards Against Humanity built on token-curated registries and bonding curves.",
     description:
       "Co-founded Crypto Against Humanity at the ETHBuenosAires Hackathon. Recognized as an overall winner. Built using Solidity, React, IPFS, and bleeding edge crypto-economic primitives such as Token Curated Registries and Bonding Curves.",
     sponsors: ["Solidity", "React", "IPFS", "Token Curated Registries", "Bonding Curves"],

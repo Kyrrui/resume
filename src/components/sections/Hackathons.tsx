@@ -1,6 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import { hackathons, type Hackathon } from "@/data/resume";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
+import { HackathonModal } from "@/components/sections/HackathonModal";
 
 const toneRing: Record<Hackathon["tone"], string> = {
   gold: "from-amber-300/40 via-amber-500/20 to-transparent",
@@ -24,6 +28,8 @@ const toneLabel: Record<Hackathon["tone"], string> = {
 };
 
 export function Hackathons() {
+  const [selected, setSelected] = useState<Hackathon | null>(null);
+
   return (
     <section id="hackathons" className="relative py-24 md:py-32 bg-hex">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
@@ -40,75 +46,102 @@ export function Hackathons() {
         />
 
         <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] sm:grid-cols-2 lg:grid-cols-4">
-          {hackathons.map((h, i) => (
-            <Reveal
-              key={`${h.event}-${h.location}-${i}`}
-              delay={i * 0.04}
-              as="article"
-            >
-              <article className="group relative h-full bg-[var(--bg)] p-6 transition-colors hover:bg-white/[0.02]">
-                {/* corner glow strip */}
-                <div
-                  className={`pointer-events-none absolute -top-px -left-px h-24 w-24 bg-gradient-to-br ${toneRing[h.tone]} opacity-60 transition-opacity group-hover:opacity-100`}
-                  style={{
-                    maskImage:
-                      "radial-gradient(closest-side, black, transparent)",
-                    WebkitMaskImage:
-                      "radial-gradient(closest-side, black, transparent)",
-                  }}
-                />
+          {hackathons.map((h, i) => {
+            const clickable = Boolean(h.description);
+            return (
+              <Reveal
+                key={`${h.event}-${h.location}-${i}`}
+                delay={i * 0.04}
+                as="article"
+              >
+                <article
+                  {...(clickable
+                    ? {
+                        role: "button",
+                        tabIndex: 0,
+                        onClick: () => setSelected(h),
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelected(h);
+                          }
+                        },
+                        "aria-label": `${h.event} — ${h.project}, view details`,
+                      }
+                    : {})}
+                  className={`group relative flex h-full flex-col bg-[var(--bg)] p-6 transition-colors hover:bg-white/[0.02] focus:outline-none ${
+                    clickable
+                      ? "cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400/60"
+                      : ""
+                  }`}
+                >
+                  {/* corner glow strip */}
+                  <div
+                    className={`pointer-events-none absolute -top-px -left-px h-24 w-24 bg-gradient-to-br ${toneRing[h.tone]} opacity-60 transition-opacity group-hover:opacity-100`}
+                    style={{
+                      maskImage:
+                        "radial-gradient(closest-side, black, transparent)",
+                      WebkitMaskImage:
+                        "radial-gradient(closest-side, black, transparent)",
+                    }}
+                  />
 
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                    {h.date}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${toneLabel[h.tone]}`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${toneDot[h.tone]}`}
-                    />
-                    {h.tone === "finalist" ? "Finalist" : "Winner"}
-                  </span>
-                </div>
-
-                <div className="mt-5">
-                  <div className="font-display text-lg font-semibold tracking-tight">
-                    {h.event}{" "}
-                    <span className="text-[var(--text-muted)] font-normal">
-                      · {h.location}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
+                      {h.date}
                     </span>
-                  </div>
-                  <div className="mt-1 text-sm text-[var(--text-muted)]">
-                    {h.project}
-                  </div>
-                  {h.description && (
-                    <p className="mt-3 text-[13px] leading-relaxed text-[var(--text-muted)]">
-                      {h.description}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-5 inline-flex items-center gap-2 rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 text-xs">
-                  <span className="font-mono text-[var(--text-faint)]">↳</span>
-                  <span className={`${toneLabel[h.tone]}`}>{h.result}</span>
-                </div>
-
-                <div className="mt-5 flex flex-wrap gap-1.5">
-                  {h.sponsors.map((s) => (
                     <span
-                      key={s}
-                      className="rounded border border-white/[0.06] bg-white/[0.015] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]"
+                      className={`inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${toneLabel[h.tone]}`}
                     >
-                      {s}
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${toneDot[h.tone]}`}
+                      />
+                      {h.tone === "finalist" ? "Finalist" : "Winner"}
                     </span>
-                  ))}
-                </div>
-              </article>
-            </Reveal>
-          ))}
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="font-display text-lg font-semibold tracking-tight">
+                      {h.event}{" "}
+                      <span className="text-[var(--text-muted)] font-normal">
+                        · {h.location}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-sm text-[var(--text-muted)]">
+                      {h.project}
+                    </div>
+                    {h.summary && (
+                      <p className="mt-3 text-[13px] leading-relaxed text-[var(--text-muted)]">
+                        {h.summary}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-5 inline-flex items-center gap-2 self-start rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 text-xs">
+                    <span className="font-mono text-[var(--text-faint)]">↳</span>
+                    <span className={`${toneLabel[h.tone]}`}>{h.result}</span>
+                  </div>
+
+                  {clickable && (
+                    <div className="mt-auto pt-5 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-faint)] transition-colors group-hover:text-[var(--text-muted)]">
+                      View details
+                      <span className="transition-transform group-hover:translate-x-0.5">
+                        →
+                      </span>
+                    </div>
+                  )}
+                </article>
+              </Reveal>
+            );
+          })}
         </div>
       </div>
+
+      <HackathonModal
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        hackathon={selected}
+      />
     </section>
   );
 }
