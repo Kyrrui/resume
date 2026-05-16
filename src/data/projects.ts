@@ -108,7 +108,7 @@ export const projects: Record<string, ProjectDetails> = {
   },
   "testamentum-bot": {
     title: "Testamentum Discord Bot",
-    subtitle: "Creator & Maintainer · 2024–Present",
+    subtitle: "Creator & Maintainer · 2026–Present",
     url: "https://github.com/Kyrrui/testamentum-bot",
     logo: "/testamentum_bot.png",
     logoShape: "circle",
