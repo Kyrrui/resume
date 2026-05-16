@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -96,7 +97,27 @@ const CONTENT_MASK =
   "rgba(0,0,0,1) calc(50% + 650px)," +
   "rgba(0,0,0,1) 100%)";
 
+// Desktop-only. Below lg the content mask already hides almost the
+// entire chain, so don't mount it (or its ~190 scroll-linked motion
+// values) on phones/tablets. SSR-safe: starts false, flips after
+// mount via matchMedia, so there's no hydration mismatch.
+function useIsDesktop() {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return desktop;
+}
+
 export function BackgroundChain() {
+  return useIsDesktop() ? <Chain /> : null;
+}
+
+function Chain() {
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll();
 

@@ -160,7 +160,7 @@ export function Nav() {
 
         <a
           href="#contact"
-          className="group hidden md:inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-1.5 text-sm text-white transition hover:bg-white/[0.06]"
+          className="group inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-1.5 text-sm text-white transition hover:bg-white/[0.06]"
         >
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-violet-400" />
           Get in touch
