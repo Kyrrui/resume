@@ -39,7 +39,7 @@ export function Hackathons() {
           }
         />
 
-        <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] sm:grid-cols-2 lg:grid-cols-4">
           {hackathons.map((h, i) => (
             <Reveal
               key={`${h.event}-${h.location}-${i}`}
