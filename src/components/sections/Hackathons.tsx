@@ -82,6 +82,11 @@ export function Hackathons() {
                   <div className="mt-1 text-sm text-[var(--text-muted)]">
                     {h.project}
                   </div>
+                  {h.description && (
+                    <p className="mt-3 text-[13px] leading-relaxed text-[var(--text-muted)]">
+                      {h.description}
+                    </p>
+                  )}
                 </div>
 
                 <div className="mt-5 inline-flex items-center gap-2 rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 text-xs">

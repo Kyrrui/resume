@@ -21,34 +21,17 @@ export type Hackathon = {
   date: string;
   project: string;
   result: string;
+  description?: string;
   sponsors: string[];
   tone: "gold" | "silver" | "bronze" | "finalist";
 };
 
 export const hackathons: Hackathon[] = [
   {
-    event: "Fidelity Asset Management Hackathon",
+    event: "Fidelity Hackathon",
     location: "Boston, MA",
-    date: "2025",
+    date: "July 2025",
     project: "Traderoute Multi-Dex",
-    result: "Winner",
-    sponsors: [],
-    tone: "gold",
-  },
-  {
-    event: "ETHBerlin",
-    location: "Berlin, DE",
-    date: "Sep 2018",
-    project: "Boomerang — EIP-1077 UX",
-    result: "Winner · Best UX",
-    sponsors: [],
-    tone: "gold",
-  },
-  {
-    event: "ETHBuenosAires",
-    location: "Buenos Aires, AR",
-    date: "—",
-    project: "Hackathon Winner",
     result: "Winner",
     sponsors: [],
     tone: "gold",
@@ -56,11 +39,35 @@ export const hackathons: Hackathon[] = [
   {
     event: "ETHDenver",
     location: "Denver, CO",
-    date: "—",
-    project: "Spirit of Build",
+    date: "February 2019",
+    project: "Universal Wallet",
     result: "Spirit of Build Award",
-    sponsors: [],
-    tone: "finalist",
+    description:
+      "Co-created 'Universal Wallet' at the ETHDenver Hackathon. Recognized as the most complete end-to-end product. Built using Solidity, React, Create2, Universal Logins, and Wyre. The Universal Wallet is an Ethereum web browser wallet with a cutting edge user experience.",
+    sponsors: ["Solidity", "React", "Create2", "Universal Logins", "Wyre"],
+    tone: "silver",
+  },
+  {
+    event: "ETHBerlin",
+    location: "Berlin, DE",
+    date: "September 2018",
+    project: "AllAboard.xyz",
+    result: "Best UX",
+    description:
+      "Co-created 'All Aboard!' at the ETHBerlin Hackathon. Recognized as the winner for best UX in a hackathon project. Built using Solidity, React, and new concepts such as Universal Login by Alex Van de Sande, and Meta Transactions by Austin Thomas Griffith.",
+    sponsors: ["Solidity", "React", "Universal Login", "Meta Transactions"],
+    tone: "gold",
+  },
+  {
+    event: "ETHBuenosAires",
+    location: "Buenos Aires, AR",
+    date: "May 2018",
+    project: "CryptoAgainstHumanity.io",
+    result: "Overall Winner",
+    description:
+      "Co-founded Crypto Against Humanity at the ETHBuenosAires Hackathon. Recognized as an overall winner. Built using Solidity, React, IPFS, and bleeding edge crypto-economic primitives such as Token Curated Registries and Bonding Curves.",
+    sponsors: ["Solidity", "React", "IPFS", "Token Curated Registries", "Bonding Curves"],
+    tone: "gold",
   },
 ];
 
