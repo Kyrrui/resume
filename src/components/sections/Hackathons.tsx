@@ -46,7 +46,7 @@ export function Hackathons() {
           }
         />
 
-        <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] md:grid-cols-2">
           {hackathons.map((h, i) => {
             const clickable = Boolean(h.description || h.url);
             return (
@@ -54,6 +54,7 @@ export function Hackathons() {
                 key={`${h.event}-${h.location}-${i}`}
                 delay={i * 0.04}
                 as="article"
+                className="h-full"
               >
                 <article
                   {...(clickable
@@ -88,12 +89,12 @@ export function Hackathons() {
                   />
 
                   {h.image && (
-                    <div className="relative mb-4 h-7 w-24">
+                    <div className="relative mb-4 h-8 w-28">
                       <Image
                         src={h.image}
                         alt=""
                         fill
-                        sizes="96px"
+                        sizes="112px"
                         className="object-contain object-left opacity-90"
                       />
                     </div>
@@ -130,28 +131,23 @@ export function Hackathons() {
                     )}
                   </div>
 
-                  {/* Footer pinned to the card bottom with a constant
-                      height (the non-clickable card keeps an invisible
-                      "View details" spacer) so the award chip lands at
-                      the same place on every card. */}
-                  <div className="mt-auto pt-6">
+                  {/* Single-row footer pinned to the card bottom so the
+                      award chip lands at the same place on every card. */}
+                  <div className="mt-auto flex items-center justify-between gap-3 pt-6">
                     <span className="inline-flex items-center gap-2 rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 text-xs">
                       <span className="font-mono text-[var(--text-faint)]">
                         ↳
                       </span>
                       <span className={`${toneLabel[h.tone]}`}>{h.result}</span>
                     </span>
-                    <div
-                      aria-hidden={!clickable}
-                      className={`mt-4 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-faint)] transition-colors group-hover:text-[var(--text-muted)] ${
-                        clickable ? "" : "invisible"
-                      }`}
-                    >
-                      View details
-                      <span className="transition-transform group-hover:translate-x-0.5">
-                        →
+                    {clickable && (
+                      <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-faint)] transition-colors group-hover:text-[var(--text-muted)]">
+                        View details
+                        <span className="transition-transform group-hover:translate-x-0.5">
+                          →
+                        </span>
                       </span>
-                    </div>
+                    )}
                   </div>
                 </article>
               </Reveal>
