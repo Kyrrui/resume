@@ -94,8 +94,8 @@ export function Building() {
           title="Currently Building"
           caption={
             expanded
-              ? "Every repo I've touched in the past year — public and private, pulled live from GitHub at build time."
-              : "My most active repos over the last 30 days — public and private, pulled live from GitHub at build time."
+              ? "Every repo I've touched in the past year — pulled live from GitHub daily"
+              : "My most active repos over the last 30 days — pulled live from GitHub daily"
           }
           action={
             data.generatedAt && (
