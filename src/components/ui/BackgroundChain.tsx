@@ -76,7 +76,7 @@ const NODES: Node[] = Array.from({ length: N }, (_, i) => {
   return {
     x,
     y,
-    label: `#${BASE_BLOCK - i}`,
+    label: `#${BASE_BLOCK + i}`,
     accent: i % 5 === 2,
     at: REVEAL_START + (i / N) * REVEAL_SPAN,
     fade: fadeAt(y),
