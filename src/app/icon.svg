@@ -7,9 +7,9 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="12" fill="#0b0d14"/>
-  <rect x="9" y="9" width="46" height="46" rx="4"
+  <rect x="7" y="7" width="50" height="50" rx="4"
         fill="rgba(139,92,246,0.10)" stroke="url(#b)" stroke-width="3"/>
-  <text x="32" y="33" text-anchor="middle" dominant-baseline="middle"
+  <text x="32" y="34" text-anchor="middle" dominant-baseline="middle"
         font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
-        font-size="25" font-weight="700" letter-spacing="0.5" fill="#ede9fe">KB</text>
+        font-size="34" font-weight="700" letter-spacing="0" fill="#ede9fe">KB</text>
 </svg>
