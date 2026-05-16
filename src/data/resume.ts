@@ -27,6 +27,15 @@ export type Hackathon = {
 
 export const hackathons: Hackathon[] = [
   {
+    event: "Fidelity Asset Management Hackathon",
+    location: "Boston, MA",
+    date: "2025",
+    project: "Traderoute Multi-Dex",
+    result: "Winner",
+    sponsors: [],
+    tone: "gold",
+  },
+  {
     event: "ETHBerlin",
     location: "Berlin, DE",
     date: "Sep 2018",
