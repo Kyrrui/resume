@@ -6,7 +6,7 @@ export const profile = {
   location: "Greater Boston",
   currently: "Fidelity Investments",
   blurb:
-    "Senior Blockchain Data Engineer at Fidelity. I work where institutional finance meets Ethereum — building data infrastructure for on-chain analytics by day, accelerating personal projects with AI-assisted development and maintaining a home Ethereum validator by night.",
+    "Senior Blockchain Data Engineer at Fidelity. I work where institutional finance meets Ethereum — building data infrastructure for on-chain analytics by day, building personal projects with AI-accelerated development and maintaining a home Ethereum validator by night.",
   links: {
     linkedin: "https://www.linkedin.com/in/kyle-c-bryant",
     // TODO: fill these in with your real handles
