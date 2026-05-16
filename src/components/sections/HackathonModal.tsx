@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import type { Hackathon } from "@/data/resume";
 
@@ -71,32 +72,60 @@ export function HackathonModal({
             className="relative max-h-full w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.1] bg-[var(--bg-elev)] shadow-[0_30px_120px_-20px_rgba(139,92,246,0.35)]"
           >
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/[0.06] bg-[var(--bg-elev)]/95 px-6 py-5 backdrop-blur md:px-8">
-              <div className="min-w-0">
-                <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                  {hackathon.event} · {hackathon.location} · {hackathon.date}
-                </div>
-                <h3 className="mt-1 font-display text-xl font-semibold tracking-tight text-[var(--text)] md:text-2xl">
-                  {hackathon.project}
-                </h3>
-                <span
-                  className={`mt-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${toneText[hackathon.tone]}`}
-                >
+              <div className="flex min-w-0 items-start gap-4">
+                {hackathon.image && (
+                  <div className="relative hidden h-12 w-20 shrink-0 sm:block">
+                    <Image
+                      src={hackathon.image}
+                      alt=""
+                      fill
+                      sizes="80px"
+                      className="object-contain object-left"
+                    />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
+                    {hackathon.event} · {hackathon.location} · {hackathon.date}
+                  </div>
+                  <h3 className="mt-1 font-display text-xl font-semibold tracking-tight text-[var(--text)] md:text-2xl">
+                    {hackathon.project}
+                  </h3>
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${toneDot[hackathon.tone]}`}
-                  />
-                  {hackathon.result}
-                </span>
+                    className={`mt-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${toneText[hackathon.tone]}`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${toneDot[hackathon.tone]}`}
+                    />
+                    {hackathon.result}
+                  </span>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.02] text-[var(--text-muted)] transition hover:border-white/[0.2] hover:text-white"
-                aria-label="Close"
-              >
-                <span aria-hidden className="text-base leading-none">
-                  ×
-                </span>
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                {hackathon.url && (
+                  <a
+                    href={hackathon.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-sm font-medium text-black transition hover:bg-white/90"
+                  >
+                    <span>View project</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">
+                      ↗
+                    </span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.02] text-[var(--text-muted)] transition hover:border-white/[0.2] hover:text-white"
+                  aria-label="Close"
+                >
+                  <span aria-hidden className="text-base leading-none">
+                    ×
+                  </span>
+                </button>
+              </div>
             </div>
 
             <div className="px-6 py-6 md:px-8 md:py-7">

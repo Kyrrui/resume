@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { hackathons, type Hackathon } from "@/data/resume";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
@@ -47,7 +48,7 @@ export function Hackathons() {
 
         <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] sm:grid-cols-2 lg:grid-cols-4">
           {hackathons.map((h, i) => {
-            const clickable = Boolean(h.description);
+            const clickable = Boolean(h.description || h.url);
             return (
               <Reveal
                 key={`${h.event}-${h.location}-${i}`}
@@ -85,6 +86,18 @@ export function Hackathons() {
                         "radial-gradient(closest-side, black, transparent)",
                     }}
                   />
+
+                  {h.image && (
+                    <div className="relative mb-4 h-7 w-24">
+                      <Image
+                        src={h.image}
+                        alt=""
+                        fill
+                        sizes="96px"
+                        className="object-contain object-left opacity-90"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">

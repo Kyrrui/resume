@@ -25,6 +25,10 @@ export type Hackathon = {
   summary?: string;
   /** Full write-up shown in the modal. */
   description?: string;
+  /** External link surfaced in the modal (devpost, write-up, repo). */
+  url?: string;
+  /** Event logo, path under /public. */
+  image?: string;
   sponsors: string[];
   tone: "gold" | "silver" | "bronze" | "finalist";
 };
@@ -44,6 +48,8 @@ export const hackathons: Hackathon[] = [
     location: "Denver, CO",
     date: "February 2019",
     project: "Universal Wallet",
+    image: "/ethdenver-logo.png",
+    url: "https://medium.com/wearekickback/trend-shift-of-wallet-technology-at-ethdenver-2e9ec261caea",
     result: "Spirit of Build Award",
     summary:
       "An Ethereum browser wallet with a cutting-edge UX — judged the most complete end-to-end product.",
@@ -57,6 +63,8 @@ export const hackathons: Hackathon[] = [
     location: "Berlin, DE",
     date: "September 2018",
     project: "AllAboard.xyz",
+    image: "/ETHBerlin.jpg",
+    url: "https://devpost.com/software/enter-crypto",
     result: "Best UX",
     summary:
       "Best-UX winner — an early take on Universal Login and meta-transactions.",
@@ -70,6 +78,8 @@ export const hackathons: Hackathon[] = [
     location: "Buenos Aires, AR",
     date: "May 2018",
     project: "CryptoAgainstHumanity.io",
+    image: "/ethbuenosaires_logo.png",
+    url: "https://devpost.com/software/crypto-against-humanity",
     result: "Overall Winner",
     summary:
       "Overall winner — on-chain Cards Against Humanity built on token-curated registries and bonding curves.",
