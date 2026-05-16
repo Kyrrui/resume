@@ -40,6 +40,16 @@ function nodeAt(i: number) {
   return { x: COLS[col], y: START_Y + row * ROW_GAP };
 }
 
+// The chain dissolves toward the bottom so it's never left sitting
+// fully visible in the empty/sparse area below the page content.
+const FADE_START = 80;
+const FADE_END = 92;
+function fadeAt(y: number) {
+  if (y <= FADE_START) return 1;
+  if (y >= FADE_END) return 0;
+  return 1 - (y - FADE_START) / (FADE_END - FADE_START);
+}
+
 // Scroll-progress window the whole chain builds across. Starts > 0 so
 // the chain is invisible while you're at the very top of the page.
 const REVEAL_START = 0.03;
@@ -57,6 +67,8 @@ type Node = {
   accent: boolean;
   /** Scroll progress at which this node begins to reveal. */
   at: number;
+  /** Max opacity (ramps to 0 toward the bottom of the page). */
+  fade: number;
 };
 
 const NODES: Node[] = Array.from({ length: N }, (_, i) => {
@@ -67,6 +79,7 @@ const NODES: Node[] = Array.from({ length: N }, (_, i) => {
     label: `#${BASE_BLOCK - i}`,
     accent: i % 5 === 2,
     at: REVEAL_START + (i / N) * REVEAL_SPAN,
+    fade: fadeAt(y),
   };
 });
 
@@ -134,7 +147,7 @@ function Segment({
   const opacity = useTransform(
     progress,
     [to.at, to.at + BLK_DUR],
-    [0, 1],
+    [0, to.fade],
     { clamp: true }
   );
   return (
@@ -145,7 +158,7 @@ function Segment({
       }
       strokeWidth={1}
       vectorEffect="non-scaling-stroke"
-      style={{ opacity: reduce ? 1 : opacity }}
+      style={{ opacity: reduce ? to.fade : opacity }}
     />
   );
 }
@@ -162,7 +175,7 @@ function Block({
   const opacity = useTransform(
     progress,
     [node.at, node.at + BLK_DUR],
-    [0, 1],
+    [0, node.fade],
     { clamp: true }
   );
   const ty = useTransform(progress, [node.at, node.at + BLK_DUR], [14, 0], {
@@ -191,7 +204,7 @@ function Block({
           height: "clamp(64px, 8.5vw, 110px)",
           y: reduce ? 0 : ty,
           scale: reduce ? 1 : scale,
-          opacity: reduce ? 1 : opacity,
+          opacity: reduce ? node.fade : opacity,
           border: `1px solid ${
             node.accent
               ? "rgba(167,139,250,0.22)"
