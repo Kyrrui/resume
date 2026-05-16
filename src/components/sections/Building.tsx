@@ -47,6 +47,22 @@ type RecentReposData = {
 
 const data = recentRepos as RecentReposData;
 
+// The year view spans 365 daily points, which renders as unreadable
+// noise. Bucket the window into weeks (sum of 7 days, anchored to the
+// most recent day) so the expanded chart stays legible.
+function weekRangesFor(len: number): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  for (let end = len; end > 0; end -= 7) {
+    ranges.push([Math.max(0, end - 7), end]);
+  }
+  return ranges.reverse();
+}
+function sumRange(arr: number[], [start, end]: [number, number]): number {
+  let t = 0;
+  for (let i = start; i < end; i++) t += arr[i] ?? 0;
+  return t;
+}
+
 export function Building() {
   // Collapsed = every repo touched in the last 30 days. "Show more"
   // expands to every repo touched in the past year (longer chart +
@@ -69,6 +85,25 @@ export function Building() {
     0,
     (yearWin?.repos.length ?? 0) - COLLAPSED_CARDS
   );
+
+  // Year window → weekly buckets; the 30-day window stays daily.
+  const weekRanges = expanded && win ? weekRangesFor(win.days.length) : null;
+  const chartData =
+    win && weekRanges
+      ? {
+          windowDays: win.windowDays,
+          days: weekRanges.map(([, end]) => win.days[end - 1]),
+          totalByDay: weekRanges.map((r) => sumRange(win.totalByDay, r)),
+        }
+      : win;
+  const graphRepos = chartRepos.map((r) => ({
+    name: r.name,
+    displayTitle: projects[r.name]?.title ?? r.name,
+    language: r.language,
+    commitsByDay: weekRanges
+      ? weekRanges.map((rg) => sumRange(r.commitsByDay ?? [], rg))
+      : r.commitsByDay ?? [],
+  }));
 
   // At most one repo is "active" at a time — its line is what the chart
   // focuses on. Plain (non-curated) cards toggle this like a radio.
@@ -111,15 +146,10 @@ export function Building() {
           <EmptyState />
         ) : (
           <>
-            {win.days.length > 0 && (
+            {chartData && chartData.days.length > 0 && (
               <BuildingChart
-                chart={win}
-                repos={chartRepos.map((r) => ({
-                  name: r.name,
-                  displayTitle: projects[r.name]?.title ?? r.name,
-                  language: r.language,
-                  commitsByDay: r.commitsByDay ?? [],
-                }))}
+                chart={chartData}
+                repos={graphRepos}
                 activeRepoName={activeRepoName}
                 onSelectRepo={toggleActive}
               />

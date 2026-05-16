@@ -110,10 +110,14 @@ export function BuildingChart({
     chart.windowDays >= 360
       ? "last 12 months"
       : `last ${chart.windowDays} days`;
+  // Year window is bucketed weekly upstream; shorter windows are daily.
+  const perUnit = chart.windowDays >= 360 ? "week" : "day";
 
   // Short windows label each tick "Mon D"; long (year) windows just use
   // the month so a dozen labels don't collide.
-  const longWindow = n > 90;
+  // Year window is weekly (~52 pts) but should still read long:
+  // month-only x labels, more ticks, year in the tooltip.
+  const longWindow = chart.windowDays >= 360 || n > 90;
   const formatTick = (iso: string) => {
     const d = new Date(iso + "T00:00:00Z");
     return d.toLocaleString(undefined, {
@@ -199,7 +203,7 @@ export function BuildingChart({
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--text-faint)]">
             {focused
               ? `${focused.displayTitle} · ${windowLabel}`
-              : `Commits per day · ${windowLabel}`}
+              : `Commits per ${perUnit} · ${windowLabel}`}
           </div>
           <div className="mt-1 font-display text-2xl font-semibold tracking-tight text-[var(--text)]">
             {headerTotal}{" "}
@@ -246,7 +250,7 @@ export function BuildingChart({
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full"
         role="img"
-        aria-label={`Line chart of commits per day for the last ${chart.windowDays} days.`}
+        aria-label={`Line chart of commits per ${perUnit}, ${windowLabel}.`}
       >
         {ticks.map((t, i) => (
           <g key={i}>
