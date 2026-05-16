@@ -83,6 +83,19 @@ const NODES: Node[] = Array.from({ length: N }, (_, i) => {
   };
 });
 
+// Hide the chain across the centered content column (~max-w-6xl,
+// 1152px) so it never cuts through text — it reads as going behind
+// the content and re-emerging in the side gutters. Soft 90px feather
+// so blocks slide out of view rather than hard-clipping.
+const CONTENT_MASK =
+  "linear-gradient(to right," +
+  "rgba(0,0,0,1) 0," +
+  "rgba(0,0,0,1) calc(50% - 650px)," +
+  "rgba(0,0,0,0) calc(50% - 560px)," +
+  "rgba(0,0,0,0) calc(50% + 560px)," +
+  "rgba(0,0,0,1) calc(50% + 650px)," +
+  "rgba(0,0,0,1) 100%)";
+
 export function BackgroundChain() {
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll();
@@ -91,6 +104,10 @@ export function BackgroundChain() {
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{
+        WebkitMaskImage: CONTENT_MASK,
+        maskImage: CONTENT_MASK,
+      }}
     >
       {/* Connectors. preserveAspectRatio=none lets % coords map to the
           full layer; only straight axis-aligned lines, so the stretch
