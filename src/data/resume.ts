@@ -39,6 +39,7 @@ export const hackathons: Hackathon[] = [
     location: "Boston, MA",
     date: "July 2025",
     project: "Traderoute Multi-Dex",
+    image: "/fidelity_investments_logo.jpg",
     result: "Winner",
     sponsors: [],
     tone: "gold",
