@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { hackathons, type Hackathon } from "@/data/resume";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
@@ -90,17 +89,14 @@ export function Hackathons() {
 
                   {/* Logo + hackathon name lockup; result badge right */}
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-4">
+                    <div className="flex min-w-0 items-center gap-3">
                       {h.image && (
-                        <div className="relative h-14 w-28 shrink-0">
-                          <Image
-                            src={h.image}
-                            alt=""
-                            fill
-                            sizes="112px"
-                            className="object-contain object-left"
-                          />
-                        </div>
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={h.image}
+                          alt=""
+                          className="h-14 w-auto max-w-[170px] shrink-0 object-contain"
+                        />
                       )}
                       <div className="min-w-0">
                         <div className="font-display text-lg font-semibold tracking-tight text-[var(--text)]">
