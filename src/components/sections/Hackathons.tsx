@@ -88,24 +88,31 @@ export function Hackathons() {
                     }}
                   />
 
-                  {h.image && (
-                    <div className="relative mb-4 h-8 w-28">
-                      <Image
-                        src={h.image}
-                        alt=""
-                        fill
-                        sizes="112px"
-                        className="object-contain object-left opacity-90"
-                      />
+                  {/* Logo + hackathon name lockup; result badge right */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-4">
+                      {h.image && (
+                        <div className="relative h-14 w-28 shrink-0">
+                          <Image
+                            src={h.image}
+                            alt=""
+                            fill
+                            sizes="112px"
+                            className="object-contain object-left"
+                          />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-display text-lg font-semibold tracking-tight text-[var(--text)]">
+                          {h.event}
+                        </div>
+                        <div className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--text-faint)]">
+                          {h.location} · {h.date}
+                        </div>
+                      </div>
                     </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                      {h.date}
-                    </span>
                     <span
-                      className={`inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${toneLabel[h.tone]}`}
+                      className={`inline-flex shrink-0 items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${toneLabel[h.tone]}`}
                     >
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${toneDot[h.tone]}`}
@@ -115,17 +122,11 @@ export function Hackathons() {
                   </div>
 
                   <div className="mt-5">
-                    <div className="font-display text-lg font-semibold tracking-tight">
-                      {h.event}{" "}
-                      <span className="text-[var(--text-muted)] font-normal">
-                        · {h.location}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-sm text-[var(--text-muted)]">
+                    <div className="text-sm font-medium text-[var(--text)]">
                       {h.project}
                     </div>
                     {h.summary && (
-                      <p className="mt-3 text-[13px] leading-relaxed text-[var(--text-muted)]">
+                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-muted)]">
                         {h.summary}
                       </p>
                     )}
